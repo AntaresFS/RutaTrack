@@ -29,50 +29,69 @@ export const Inicio = () => {
         loginWarning: "",
         forgotPasswordEmail: "",
     });
+
+    const [lastFocusedElement, setLastFocusedElement] = useState(null);
+
     const navigate = useNavigate();
 
-    // Manejar el cierre de modales
-    const closeModal = () => setShowModal({ login: false, register: false, success: false, forgotPassword: false });
+    // Handle modal open and focus management
+    const openModal = (modalType) => {
+        setLastFocusedElement(document.activeElement); // Save the focused element
+        setShowModal({ ...showModal, [modalType]: true });
+    };
 
+    // Manejar el cierre de modales
+    const closeModal = () => {
+        setShowModal({ login: false, register: false, success: false, forgotPassword: false });
+        setMessages({ warning: "", loginWarning: "", forgotPasswordEmail: "" });
+        lastFocusedElement?.focus(); // Restore focus to the last element
+    };
+
+    // Función para cerrar modal con tecla Esc.
     useEffect(() => {
+        let timeoutId;
         const handleEscKey = (event) => {
-            if (event.key === "Escape") closeModal();
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                if (event.key === "Escape") closeModal();
+            }, 100);
         };
 
         document.addEventListener("keydown", handleEscKey);
-        return () => document.removeEventListener("keydown", handleEscKey);
+        return () => {
+            clearTimeout(timeoutId);
+            document.removeEventListener("keydown", handleEscKey);
+        };
     }, []);
+
 
     const handleChange = (e) => {
         setSignUpData({ ...signupData, [e.target.name]: e.target.value });
     };
 
     const handleRegisterChange = (e) => {
-        const { name, value} = e.target;
+        const { name, value } = e.target;
         setRegisterData({ ...registerData, [name]: value });
     };
 
-    const handleForgotPasswordChange = (e) => {
-        setMessages({ ...messages, forgotPasswordEmail: e.target.value });
-    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessages({ ...messages, loginWarning: "" });
 
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/login`, signupData, { headers: HEADERS });
+            const response = await axios.post(`${BACKEND_URL}/api/login`, signupData, { headers: HEADERS, withCredentials: true });
 
             if (response.status === 200) {
-                const { token, user } = response.data;
-                localStorage.setItem("token", token);
+                const { user } = response.data;
                 localStorage.setItem("user", JSON.stringify(user));
                 navigate("/profile");
             }
         } catch (error) {
+            // Manejo de errores específico
             const errorMsg = error.response?.status === 401
-                ? "Usuario no registrado o credenciales incorrectas"
-                : error.response?.data.error || "Error en el inicio de sesión";
+                ? "Credenciales incorrectas. Intenta nuevamente."
+                : "Error al iniciar sesión. Por favor, inténtalo más tarde.";
             setMessages({ ...messages, loginWarning: errorMsg });
         }
     };
@@ -80,15 +99,15 @@ export const Inicio = () => {
     const handleRegisterSubmit = async (e) => {
         e.preventDefault();
 
-        if (registerData.password !== registerData.confirmPassword){
-            setMessages ({ ...messages, warning: "La contraseña no coincide"})
+        if (registerData.password !== registerData.confirmPassword) {
+            setMessages({ ...messages, warning: "La contraseña no coincide" })
         }
 
         try {
             const response = await axios.post(`${BACKEND_URL}/api/register`, registerData, { headers: HEADERS });
 
             if (response.status === 201) {
-                setMessages({ ...messages, warning: ""})
+                setMessages({ ...messages, warning: "" })
                 setShowModal({ ...showModal, register: false, success: true });
                 setTimeout(() => {
                     setShowModal({ ...showModal, success: false, login: true });
@@ -99,7 +118,12 @@ export const Inicio = () => {
             setMessages({ ...messages, warning: errorMsg });
         }
 
-        
+
+    };
+
+    // Función para recuperar contraseña
+    const handleForgotPasswordChange = (e) => {
+        setMessages({ ...messages, forgotPasswordEmail: e.target.value });
     };
 
     const handleForgotPasswordSubmit = async (e) => {
@@ -107,16 +131,16 @@ export const Inicio = () => {
 
         try {
             await axios.post(`${BACKEND_URL}/api/forgot-password`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
-            alert("Si el correo electrónico está registrado, recibirás instrucciones para restablecer tu contraseña.");
-            closeModal();
+            setMessages({ ...messages, successMessage: "Se ha enviado un correo electrónico a su cuenta con un enlace para restablecer su contraseña." });
+            setTimeout(() => closeModal(), 3000); // Cierra el modal automáticamente después de 3 segundos
         } catch {
-            alert("Error al enviar el correo de recuperación.");
+            setMessages({ ...messages, errorMessage: "Error al enviar el correo de recuperación." });
         }
     };
 
     return (
         <div className="text-center">
-            <div className="divprincipal">
+            <div className="divprincipal" inert={showModal.login || showModal.register || showModal.success || showModal.forgotPassword}>
                 <div className="hero-section">
                     <div className="hero-content">
                         <h1 className="hero-title">Ruta Track</h1>
@@ -141,8 +165,8 @@ export const Inicio = () => {
                 {showModal.login && (
                     <Modal title="Iniciar sesión" onClose={closeModal}>
                         <form onSubmit={handleSubmit}>
-                            <div className="form-group mb-3">
-                                <label htmlFor="email" style={{ color: "red" }}>Email</label>
+                            <div className="form-input fw-bold text-start">
+                                <label className="p-2" htmlFor="email">Email</label>
                                 <input
                                     type="email"
                                     className="form-control"
@@ -154,8 +178,8 @@ export const Inicio = () => {
                                     required
                                 />
                             </div>
-                            <div className="form-group mb-3">
-                                <label htmlFor="password" style={{ color: "red" }}>Password</label>
+                            <div className="form-input fw-bold text-start mb-3">
+                                <label className="p-2" htmlFor="password">Password</label>
                                 <input
                                     type="password"
                                     className="form-control"
@@ -167,12 +191,12 @@ export const Inicio = () => {
                                     required
                                 />
                             </div>
-                            <div className="form-group text-right mb-4">
+                            <div className="form-group text-center mb-4">
                                 <a
                                     href="#"
                                     className="text-decoration-none"
                                     style={{ color: "#007bff" }}
-                                    onClick={() => setShowForgotPasswordModal(true)}
+                                    onClick={() => setShowModal({ ...showModal, forgotPassword: true })}
                                 >
                                     <u>He olvidado mi contraseña</u>
                                 </a>
@@ -185,11 +209,35 @@ export const Inicio = () => {
                     </Modal>
                 )}
 
+                {showModal.forgotPassword && (
+                    <Modal title="Recuperar contraseña" onClose={closeModal}>
+                        <form onSubmit={handleForgotPasswordSubmit}>
+                            <div className="form-group mb-3">
+                                <label htmlFor="forgotPasswordEmail">Correo electrónico</label>
+                                <input
+                                    type="email"
+                                    className="form-control"
+                                    id="forgotPasswordEmail"
+                                    placeholder="Ingrese su correo electrónico"
+                                    value={messages.forgotPasswordEmail}
+                                    onChange={handleForgotPasswordChange}
+                                    required
+                                />
+                            </div>
+                            <button type="submit" className="btn-custom-primary w-100 mb-4">
+                                Enviar
+                            </button>
+                            {messages.successMessage && <p className="text-success">{messages.successMessage}</p>}
+                            {messages.errorMessage && <p className="text-danger">{messages.errorMessage}</p>}
+                        </form>
+                    </Modal>
+                )}
+
                 {showModal.register && (
                     <Modal title="Crear cuenta" onClose={closeModal}>
                         <form onSubmit={handleRegisterSubmit}>
                             <div className="form-group mb-3">
-                                <label htmlFor="name" style={{ color: "red" }}>Nombre</label>
+                                <label htmlFor="name">Nombre</label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -202,7 +250,7 @@ export const Inicio = () => {
                                 />
                             </div>
                             <div className="form-group mb-3">
-                                <label htmlFor="lastName" style={{ color: "red" }}>Apellido</label>
+                                <label htmlFor="lastName">Apellido</label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -215,7 +263,7 @@ export const Inicio = () => {
                                 />
                             </div>
                             <div className="form-group mb-3">
-                                <label htmlFor="company" style={{ color: "red" }}>Empresa</label>
+                                <label htmlFor="company">Empresa</label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -228,7 +276,7 @@ export const Inicio = () => {
                                 />
                             </div>
                             <div className="form-group mb-3">
-                                <label htmlFor="location" style={{ color: "red" }}>Población</label>
+                                <label htmlFor="location">Población</label>
                                 <input
                                     type="text"
                                     className="form-control"
@@ -241,7 +289,7 @@ export const Inicio = () => {
                                 />
                             </div>
                             <div className="form-group mb-3">
-                                <label htmlFor="registerEmail" style={{ color: "red" }}>Email</label>
+                                <label htmlFor="registerEmail">Email</label>
                                 <input
                                     type="email"
                                     className="form-control"
@@ -254,7 +302,7 @@ export const Inicio = () => {
                                 />
                             </div>
                             <div className="form-group mb-3">
-                                <label htmlFor="password" style={{ color: "red" }}>Contraseña</label>
+                                <label htmlFor="password">Contraseña</label>
                                 <input
                                     type="password"
                                     className="form-control"
@@ -267,7 +315,7 @@ export const Inicio = () => {
                                 />
                             </div>
                             <div className="form-group mb-3">
-                                <label htmlFor="confirmPassword" style={{ color: "red" }}>Repetir contraseña</label>
+                                <label htmlFor="confirmPassword">Repetir contraseña</label>
                                 <input
                                     type="password"
                                     className="form-control"
@@ -305,4 +353,4 @@ export const Inicio = () => {
             </div>
         </div>
     );
-};
+}

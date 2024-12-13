@@ -5,19 +5,27 @@ export const Modal = ({ title, children, onClose }) => {
     return (
         <div
             className="modal fade show"
-            style={{ display: "block" }}
+            style={{
+                display: "flex",
+                alignItems: "center", // Centra verticalmente el modal
+                justifyContent: "center", // Centra horizontalmente el modal
+            }}
             aria-hidden="true"
-            onClick={onClose}
+            onClick={onClose}  // Cierra el modal al hacer clic fuera   
         >
             <div
-                className="modal-dialog"
-                style={{ maxWidth: "400px" }}
+                className="modal-dialog modal-dialog-centered"
                 onClick={(e) => e.stopPropagation()}
             >
                 <div className="modal-content">
                     <div className="card p-4">
-                        {title && <h3 className="text-center mb-4">{title}</h3>}
-                        {children}
+                        <div className="modalTitle d-flex align-items-center justify-content-between">
+                            {title && <h3 className="text-center flex-grow-1 mt-2">{title}</h3>}
+                            <button type="button" className="btn-close my-2" onClick={onClose} aria-label="Close"></button>
+                        </div>
+                        <div className="modalForm">
+                            {children}
+                        </div>
                     </div>
                 </div>
             </div>

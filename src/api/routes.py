@@ -1,6 +1,6 @@
 import os
 from sqlite3 import IntegrityError
-from flask import Blueprint, abort, jsonify, request, current_app
+from flask import Blueprint, abort, jsonify, request, current_app, make_response
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -12,7 +12,7 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 
 # Habilita CORS para todas las rutas y orígenes
 api = Blueprint('api', __name__)
-CORS(api)
+CORS(api, supports_credentials=True)
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'tu_clave_secreta')  # Usa una variable de entorno para mayor seguridad
 RESET_SECRET_KEY = os.getenv('RESET_SECRET_KEY', 'tu_clave_secreta_reset')
@@ -77,32 +77,56 @@ def create_user():
         print(f"Error en /api/register: {e}")
         return jsonify({"error": str(e)}), 500
 
-# Iniciar sesión (sin cambios)
+# Endpoint para iniciar sesión
 @api.route('/api/login', methods=['POST'])
 def login_user():
     try:
         data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
+
+        # Validación de datos
+        if not data or not isinstance(data, dict):
+            return jsonify({"error": "Datos inválidos"}), 400
+
+        email = data.get('email', '').strip().lower()
+        password = data.get('password', '').strip()
 
         if not email or not password:
             return jsonify({"error": "Email y contraseña son requeridos"}), 400
 
+        # Busca el usuario en la base de datos
         user = User.query.filter_by(email=email).first()
-        if user and check_password_hash(user.password_hash, password):
-            token = jwt.encode({
-                'user_id': user.id,
-                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-            }, SECRET_KEY, algorithm='HS256')
-            return jsonify({'token': token}), 200
-        else:
+        if not user or not check_password_hash(user.password_hash, password):
             return jsonify({"error": "Credenciales incorrectas"}), 401
 
-    except Exception as e:
-        print(f"Error en /api/login: {e}")
-        return jsonify({"error": f"Error interno del servidor: {str(e)}"}), 500
+        # Genera el token JWT
+        token = jwt.encode({
+            'user_id': user.id,
+            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        }, SECRET_KEY, algorithm='HS256')
 
-# Obtener datos del usuario autenticado (con JWT)
+        # Crea la respuesta con cookie HTTP-only
+        response = make_response(jsonify({
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'name': user.name  # Cambia según tus campos en el modelo
+            }
+        }))
+        response.set_cookie(
+            key='auth_token',
+            value=token,
+            httponly=True,  # La cookie no es accesible desde JavaScript
+            secure=True,    # Requiere HTTPS
+            samesite='Strict',  # Evita envío en solicitudes de otros sitios
+            max_age=60*60  # Duración de 1 hora
+        )
+        return response
+
+    except Exception as e:
+        api.logger.error(f"Error en /api/login: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
+
+
 # Obtener datos del usuario autenticado (con JWT)
 @api.route('/api/user', methods=['GET'])
 def get_user_profile():

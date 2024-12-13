@@ -63,6 +63,20 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }));
             },
 
+            // Función para verificar expiración del token
+            isTokenExpired: () => {
+                const token = localStorage.getItem("token");
+                if (!token) return true;
+
+                try {
+                    const { exp } = JSON.parse(atob(token.split(".")[1])); // Decodifica el payload del JWT
+                    return Date.now() > exp * 1000; // Compara la fecha actual con la expiración
+                } catch (err) {
+                    console.error("Error verificando el token:", err);
+                    return true;
+                }
+            },
+
             // Función para obtener el mensaje del backend
             getMessage: async () => {
                 try {
