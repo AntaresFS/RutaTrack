@@ -1,13 +1,4 @@
-/* Estilos para el modal */
-.modal-body {
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    height: 100%; /* Asegura que el modal body ocupe el 100% de la altura */
-    background-color: #fdfdfd; /* Color de fondo más claro para modernidad */
-    border-radius: 10px; /* Bordes redondeados */
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Sombra más sutil */
-}
+
 
 /* Asegura que los títulos estén bien espaciados */
 .form-content {
@@ -64,24 +55,6 @@
     border-bottom: 2px solid #007bff; /* Subrayado para la pestaña activa */
 }
 
-/* Estilo de la cabecera del modal */
-.modal-header {
-    background-color: #ffc107; /* Color de fondo */
-    color: BLACK; /* Color del texto */
-    border-bottom: 1px solid #0056b3; /* Línea inferior más clara */
-    border-top-left-radius: 10px; /* Bordes redondeados en la parte superior */
-    border-top-right-radius: 10px; /* Bordes redondeados en la parte superior */
-}
-
-/* Espaciado de los botones en el pie del modal */
-.modal-footer {
-    justify-content: space-between; /* Distribuir botones */
-}
-
-/* Aumentar el tamaño del modal */
-.modal-dialog {
-    max-width: 80%; /* Cambiar el porcentaje según sea necesario */
-}
 
 /* Asegurar que los divs del contenido ocupen el 100% del ancho */
 .form-content > div {

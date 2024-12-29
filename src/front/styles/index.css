@@ -1,3 +1,7 @@
+/* 
+    General Styles used on every website (Don't Repeat Yourself)
+*/
+
 html, body, #root {
     height: 100%;
     margin: 0;
@@ -19,6 +23,33 @@ html, body, #root {
     flex: 1; /* Toma todo el espacio disponible */
   }
   
-/* 
-    General Styles used on every website (Don't Repeat Yourself)
-*/
+  /* Estilos para los modales */
+
+  .modal-dialog {
+    max-width: 90vw;
+    min-width: 300px;
+    width: auto;
+  }
+
+  /* Modal styles */
+
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.text-right a {
+  color: #007bff;
+}
+
+.warning-message {
+  background-color: #f8d7da; /* Fondo rojo claro */
+  color: #721c24; /* Texto rojo oscuro */
+  border: 1px solid #f5c6cb; /* Borde rojo claro */
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+
