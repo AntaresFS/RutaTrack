@@ -7,8 +7,9 @@ import jwt
 import datetime
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from api.models import Direccion, db, User, ContactMessage , Vehiculo, Client, Socio
+from api.models import Direccion, db, Company, User, ContactMessage , Vehiculo, Client, Socio
 from flask_jwt_extended import jwt_required, get_jwt_identity
+import pytz
 
 # Habilita CORS para todas las rutas y orígenes
 api = Blueprint('api', __name__)
@@ -44,38 +45,70 @@ def get_all_users():
 @api.route('/api/register', methods=['POST'])
 def create_user():
     try:
+        # Obtener los datos JSON del cuerpo de la solicitud
         data = request.get_json()
         print(data)
+
+        # Extraer los datos del formulario
         email = data.get('email')
-        password = data.get('password')
+        password_hash = data.get('password_hash')
         name = data.get('name')
-        last_name = data.get('lastName')
-        company = data.get('company')
+        last_name = data.get('last_name')
+        company_name = data.get('company_name') 
+        company_id = data.get('company_id') 
         location = data.get('location')
+        timezone = data.get('timezone', 'UTC')  # Usar 'UTC' como valor por defecto
+        created_at = data.get('created_at', datetime.utcnow().isoformat())  # Default to current UTC time
 
-        if not email or not password:
+        # Validaciones de los campos obligatorios
+        if not email or not password_hash:
             return jsonify({"error": "Email y contraseña son requeridos"}), 400
+        if not name or not last_name:
+            return jsonify({"error": "Nombre y apellido son requeridos"}), 400
 
+    
+        # Verificar si el correo ya está registrado
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
             return jsonify({"error": "El usuario ya está registrado"}), 409
+        
+        # Obtener o crear la compañía
+        company = Company.query.filter_by(name=company_name).first()
+        if not company:
+            # Si no existe la compañía, crearla
+            company = Company(name=company_name)
+            db.session.add(company)
+            db.session.commit()  # Asegurarse de que la compañía se guarde antes de asociarla
+        
 
+        # Crear el usuario
         new_user = User(
             email=email,
-            password_hash=generate_password_hash(password),
+            password_hash=generate_password_hash(password_hash),
             name=name,
             last_name=last_name,
-            company=company,
-            location=location
+            company=company,  # Asignar la compañía al usuario
+            company_id=company_id,
+            location=location,
+            timezone=timezone,
+            created_at=datetime.fromisoformat(created_at).astimezone(pytz.utc)  # Convertir la fecha a UTC
         )
+
+        # Asociar la compañía al usuario usando company_id
+        new_user.company_id = company.id
+
+        # Agregar el usuario a la base de datos
         db.session.add(new_user)
         db.session.commit()
 
+        # Respuesta exitosa
         return jsonify({"message": "Usuario registrado exitosamente"}), 201
 
+    except KeyError as e:
+        return jsonify({"error": f"Falta el campo: {str(e)}"}), 400
     except Exception as e:
         print(f"Error en /api/register: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"Ocurrió un error inesperado: {str(e)}"}), 500
 
 # Endpoint para iniciar sesión
 @api.route('/api/login', methods=['POST'])

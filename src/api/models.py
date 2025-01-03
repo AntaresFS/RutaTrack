@@ -1,6 +1,12 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.schema import UniqueConstraint
 from flask_jwt_extended import JWTManager
+from pytz import timezone
+import pytz
+import re
+from sqlalchemy.orm import validates
+from sqlalchemy.exc import IntegrityError
 
 
 db = SQLAlchemy()
@@ -12,6 +18,49 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+class Company(db.Model):
+    __tablename__ = 'companies'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+    nif = db.Column(db.String(9), unique=True, nullable=True)
+    address = db.Column(db.String(120), unique=False, nullable=True)
+    phone = db.Column(db.Integer, unique=False, nullable=True)
+    email = db.Column(db.String(34), unique=False, nullable=True)
+
+    def __init__(self, name, nif=None, address=None, phone=None, email=None):
+        self.name = name
+        self.nif = nif
+        self.address = address
+        self.phone = phone
+        self.email = email
+
+    # Validación del campo 'nif' con un decorador de SQLAlchemy
+    @validates('nif')
+    def validate_nif(self, key, nif):
+        if nif and not re.match(r'^[A-Z0-9]{1,8}[A-Z0-9]$', nif):  # Formato simple para el NIF
+            raise ValueError("El NIF debe tener un formato válido.")
+        return nif
+    
+    # Validación del campo 'email'
+    @validates('email')
+    def validate_email(self, key, email):
+        if '@' not in email:
+            raise ValueError("El correo electrónico no tiene un formato válido.")
+
+    # Validación para evitar duplicados de nombre de compañía y nif
+    def validate_unique(self):
+        # Comprobar si ya existe una compañía con el mismo nombre
+        existing_company = Company.query.filter_by(name=self.name).first()
+        if existing_company:
+            raise ValueError("El nombre de la compañía ya está registrado.")
+        
+        # Comprobar si ya existe una compañía con el mismo NIF
+        if self.nif:
+            existing_nif = Company.query.filter_by(nif=self.nif).first()
+            if existing_nif:
+                raise ValueError("El NIF ya está registrado.")
+
 class User(db.Model):
     __tablename__ = 'users'
 
@@ -20,13 +69,15 @@ class User(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     name = db.Column(db.String(100), nullable=True)
     last_name = db.Column(db.String(100), nullable=True)
-    company = db.Column(db.String(150), nullable=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
     location = db.Column(db.String(150), nullable=True)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    timezone = db.Column(db.String(64), nullable=True, default="UTC")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    # Relación uno a muchos con Direccion y Socios
-    direcciones = db.relationship('Direccion', backref='usuario', lazy=True)
-    socios = db.relationship('Socio', backref='usuario', lazy=True)
+    # Relación uno a muchos con Address, Partners y Company
+    company = db.relationship('Company', backref='users', lazy='select')
+    direcciones = db.relationship('Direccion', backref='users', lazy='select')
+    socios = db.relationship('Socio', backref='users', lazy='select')
 
     def __init__(self, email, password_hash, name=None, last_name=None, company=None, location=None):
         self.email = email
@@ -70,6 +121,7 @@ class Direccion(db.Model):
             'comentarios': self.comentarios,
             'user_id': self.user_id
         }
+    
 class ContactMessage(db.Model):
     __tablename__ = 'contact_messages'
 
@@ -78,7 +130,7 @@ class ContactMessage(db.Model):
     email = db.Column(db.String(120), nullable=False)
     telefono = db.Column(db.String(20))
     mensaje = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __init__(self, nombre, email, mensaje, telefono=None):
         self.nombre = nombre
@@ -87,13 +139,21 @@ class ContactMessage(db.Model):
         self.mensaje = mensaje
 
     def serialize(self):
+        # Convertir created_at a la zona horaria del usuario
+        user_timezone = pytz.timezone(self.timezone) if self.timezone else pytz.utc
+        created_at_in_user_timezone = self.created_at.astimezone(user_timezone)
+        
         return {
-            "id": self.id,
-            "nombre": self.nombre,
-            "email": self.email,
-            "telefono": self.telefono,
-            "mensaje": self.mensaje,
-            "created_at": self.created_at
+            'id': self.id,
+            'email': self.email,
+            'name': self.name,
+            'last_name': self.last_name,
+            'company': self.company,
+            'location': self.location,
+            'created_at': created_at_in_user_timezone.isoformat(),  # Convertir a formato ISO en la zona horaria del usuario
+            'direcciones': [direccion.serialize() for direccion in self.direcciones],
+            'vehiculos': [vehiculo.serialize() for vehiculo in self.vehiculos],
+            'socios' : [socio.serialize() for socio in self.socios],
         }
 
 
@@ -101,8 +161,18 @@ class Client(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(100), nullable=False)
     last_name = db.Column(db.String(100), nullable=False)
-    phone = db.Column(db.String(20), nullable=False)
-    email = db.Column(db.String(120), nullable=False, unique=True)
+    nif = db.Column(db.String(16), nullable=True)
+    phone = db.Column(db.String(20), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    address = db.Column(db.String(120), nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    # Restricción única compuesta: (user_id, nif)
+    # Un mismo usuario sólo puede dar de alta un mismo NIF como cliente
+    __table_args__ = (UniqueConstraint('user_id', 'nif', name='unique_user_nif'),) 
+
+    user = db.relationship('User', backref='clients')
     
     def to_dict(self):
         return {
@@ -126,7 +196,7 @@ class Vehiculo(db.Model):
     peso = db.Column(db.Float, nullable=True)
     combustible = db.Column(db.String(50), nullable=True)
     emision = db.Column(db.String(50), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relación con el modelo User
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
