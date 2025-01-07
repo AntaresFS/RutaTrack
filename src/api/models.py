@@ -94,7 +94,7 @@ class User(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
     location = db.Column(db.String(150), nullable=True)
     timezone = db.Column(db.String(64), nullable=True, default="UTC")
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=db.func.now())  # Valor por defecto asignado por la BD
 
     # Relación uno a muchos con Company
     company = db.relationship('Company', backref='users', lazy='select')

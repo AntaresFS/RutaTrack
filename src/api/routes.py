@@ -58,7 +58,7 @@ def create_user():
         company_id = data.get('company_id') 
         location = data.get('location')
         timezone = data.get('timezone', 'UTC')  # Usar 'UTC' como valor por defecto
-        created_at = data.get('created_at', datetime.utcnow().isoformat())  # Default to current UTC time
+        created_at = data.get('created_at', datetime.datetime.utcnow().isoformat())  # Default to current UTC time
 
         # Validaciones de los campos obligatorios
         if not email or not password_hash:
@@ -91,7 +91,7 @@ def create_user():
             company_id=company_id,
             location=location,
             timezone=timezone,
-            created_at=datetime.fromisoformat(created_at).astimezone(pytz.utc)  # Convertir la fecha a UTC
+            created_at=datetime.datetime.fromisoformat(created_at).astimezone(pytz.utc)  # Convertir la fecha a UTC
         )
 
         # Asociar la compañía al usuario usando company_id

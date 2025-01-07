@@ -44,7 +44,7 @@ export const Inicio = () => {
     // Función para redirigir a otra página
     const navigate = useNavigate();
 
-    // Función para reuniciar los valores de los formularios
+    // Función para reiniciar los valores de los formularios
     const resetFormData = () => {
         setSignUpData({ email: "", password: "" });
         setRegisterData({
