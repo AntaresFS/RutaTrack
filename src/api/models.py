@@ -131,18 +131,20 @@ class Address(db.Model):
     category = db.Column(db.String(50), nullable=False)
     contact = db.Column(db.String(100), nullable=True)
     comments = db.Column(db.Text, nullable=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='addresses', lazy='select')
 
-    def __init__(self, name, address, category, contact=None, comments=None, company_id=None):
+    def __init__(self, name, address, category, contact=None, comments=None, company_id=None, created_at=None):
         self.name = name
         self.address = address
         self.category = category
         self.contact = contact
         self.comments = comments
         self.company_id = company_id
+        self.created_at = created_at
 
     def serialize(self):
         return {
@@ -211,7 +213,6 @@ class Client(db.Model):
         self.phone = phone
         self.email = email
         self.address = address
-        self.company = company
         self.company_id = company_id
         self.created_at = created_at
 
@@ -224,7 +225,6 @@ class Client(db.Model):
             'phone': self.phone,
             'email': self.email,
             'address' : self.address,
-            'company' : self.company, 
             'company_id' : self.company_id,
             'created_at' : self.created_at.isoformat()  # Convertir a formato ISO  
         }

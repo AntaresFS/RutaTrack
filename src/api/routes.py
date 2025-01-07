@@ -7,7 +7,7 @@ import jwt
 import datetime
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from api.models import Direccion, db, Company, User, ContactMessage , Vehiculo, Client, Socio
+from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import pytz
 
@@ -243,218 +243,308 @@ def reset_password(token):
         return jsonify({"error": "Error interno del servidor"}), 500
       
 # Define el blueprint para las direcciones
-direcciones_bp = Blueprint('direcciones', __name__)
+addresses_bp = Blueprint('addresses', __name__)
 
-#OBTENER TODAS LAS DIRECCIONES DEL USUARIO
-@direcciones_bp.route('/api/direcciones', methods=['GET'])
-def get_direcciones():
+# Obtener todas las direcciones de la compañía
+@addresses_bp.route('/api/addresses', methods=['GET'])
+def get_addresses():
     try:
-        # Obtener el user_id de los parámetros de la consulta (query string)
-        user_id = request.args.get('user_id')
+        # Obtener el company_id de los parámetros de la consulta (query string)
+        company_id = request.args.get('company_id')
 
-        if not user_id:
-            return jsonify({"error": "Falta el parámetro 'user_id'"}), 400
+        if not company_id:
+            return jsonify({"error": "Su cuenta no está asignada a una compañía registrada. Por favor, contacte con el administrador."}), 405
 
-        # Filtrar las direcciones por el user_id
-        direcciones = Direccion.query.filter_by(user_id=user_id).all()
+        # Filtrar las direcciones por el company_id
+        addresses = Address.query.filter_by(company_id=company_id).all()
 
         # Serializar las direcciones
-        return jsonify([direccion.serialize() for direccion in direcciones]), 200
+        return jsonify([address.serialize() for address in addresses]), 200
 
     except Exception as e:
-        print(f"Error en /api/direcciones: {e}")
+        print(f"Error en /api/addresses: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
     
-#AÑADIR NUEVA DIRECCION
-@direcciones_bp.route('/api/direcciones', methods=['POST'])
-def add_direccion():
+# Añadir nueva dirección
+@addresses_bp.route('/api/addresses', methods=['POST'])
+def add_address():
     try:
         data = request.get_json()
-        print(f"Datos recibidos: {data}")  # Verifica qué datos estás recibiendo
+        print(f"Datos recibidos: {data}")  # Verifica qué datos está recibiendo la BD
 
         # Obtener los campos del cuerpo de la solicitud
-        nombre = data.get('nombre')
-        direccion = data.get('direccion')
-        categoria = data.get('categoria')
-        contacto = data.get('contacto', '')
-        comentarios = data.get('comentarios', '')
+        id = data.get('id')
+        name = data.get('name')
+        address = data.get('address')
+        category = data.get('category')
+        contact = data.get('contact', '')
+        comments = data.get('comments', '')
+        company_id = data.get('company_id')
+        created_at = data.get('created_at')
 
-        # Obtener el user_id del cuerpo de la solicitud
-        user_id = data.get('user_id')
+        # Obtener el company_id del cuerpo de la solicitud
+        company_id = data.get('company_id')
 
         # Verificar que los campos obligatorios están presentes
-        if not nombre or not direccion or not categoria or not user_id:
-            return jsonify({"error": "Nombre, dirección, categoría y user_id son requeridos"}), 400
+        if not name or not address or not category:
+            return jsonify({"error": "Nombre, dirección y categoría son requeridos."}), 401
+        
+         # Verificar si la compañía existe
+        if not company_id:
+            return jsonify({"error": "Su usuario no está asignado a una compañía registrada. Por favor, contacte con el administrador."}), 405
 
-        # Verificar si el usuario existe
-        user = User.query.get(user_id)
-        if not user:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-
-        # Crear nueva instancia de Direccion asociada al usuario
-        nueva_direccion = Direccion(
-            nombre=nombre,
-            direccion=direccion,
-            categoria=categoria,
-            contacto=contacto,
-            comentarios=comentarios,
-            user_id=user_id  # Asociar con el usuario
+        # Crear nueva instancia de Addresses asociada a la compañía
+        new_address = Address(
+            id=id,
+            name=name,
+            address=address,
+            category=category,
+            contact=contact,
+            comments=comments,
+            company_id=company_id,  # Asociar con la compañía
+            created_at=created_at
         )
 
         # Añadir y confirmar la transacción en la base de datos
-        db.session.add(nueva_direccion)
+        db.session.add(new_address)
         db.session.commit()
 
         # Retornar la nueva dirección con el método serialize()
-        return jsonify(nueva_direccion.serialize()), 201
+        return jsonify(new_address.serialize()), 201
 
     except Exception as e:
-        print(f"Error en /api/direcciones: {e}")  # Esto imprimirá el error en la consola
+        print(f"Error en /api/addresses: {e}")  # Esto imprimirá el error en la consola
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
-# EDITAR DIRECCION
-@direcciones_bp.route('/api/direcciones/<int:id>', methods=['PUT'])
-def update_direccion(id):
+# Editar dirección
+@addresses_bp.route('/api/addresses/<int:id>', methods=['PUT'])
+def update_address(id):
     try:
         data = request.get_json()
         print(f"Datos recibidos para actualizar: {data}")
 
-        # Obtener el user_id del cuerpo de la solicitud (esto debería venir de la autenticación o de los datos enviados)
-        user_id = data.get('user_id')
+        # Obtener el company_id del cuerpo de la solicitud 
+        company_id = data.get('company_id')
 
-        if not user_id:
-            return jsonify({"error": "El user_id es requerido para esta operación"}), 400
+        if not company_id:
+            return jsonify({"error": "Su cuenta debe estar asociada a una compañía registrada para esta operación."}), 405
 
         # Buscar la dirección existente
-        direccion = Direccion.query.get(id)
-        if not direccion:
-            return jsonify({"error": "Dirección no encontrada"}), 404
+        address = Address.query.get(id)
+        if not address:
+            return jsonify({"error": "Dirección no encontrada."}), 404
 
-        # Verificar que el user_id coincida con el de la dirección
-        if direccion.user_id != user_id:
-            return jsonify({"error": "No tienes permiso para editar esta dirección"}), 403
+        # Verificar que el company_id del usuario coincida con el de la dirección
+        if address.company_id != company_id:
+            return jsonify({"error": "No tienes permiso para editar esta dirección."}), 403
 
         # Actualizar los campos
-        direccion.nombre = data.get('nombre', direccion.nombre)
-        direccion.direccion = data.get('direccion', direccion.direccion)
-        direccion.categoria = data.get('categoria', direccion.categoria)
-        direccion.contacto = data.get('contacto', direccion.contacto)
-        direccion.comentarios = data.get('comentarios', direccion.comentarios)
+        address.name = data.get('name', address.name)
+        address.address = data.get('address', address.address)
+        address.category = data.get('category', address.category)
+        address.contact = data.get('contact', address.contact)
+        address.comments = data.get('comentarios', address.comments)
 
         # Confirmar la transacción en la base de datos
         db.session.commit()
 
         # Retornar la dirección actualizada
-        return jsonify(direccion.serialize()), 200
+        return jsonify(address.serialize()), 200
 
     except Exception as e:
-        print(f"Error en /api/direcciones/{id}: {e}")
+        print(f"Error en /api/addresses/{id}: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
     
-#ELIMINAR DIRECCION
-@direcciones_bp.route('/api/direcciones/<int:id>', methods=['DELETE'])
+# Eliminar dirección
+@addresses_bp.route('/api/addresses/<int:id>', methods=['DELETE'])
 def delete_direccion(id):
     try:
         data = request.get_json()
-        user_id = data.get('user_id')
+        company_id = data.get('company_id')
 
-        if not user_id:
-            return jsonify({"error": "El user_id es requerido para esta operación"}), 400
+        if not company_id:
+            return jsonify({"error": "Su cuenta debe estar asociada a una compañía registrada para esta operación."}), 400
 
         # Buscar la dirección existente
-        direccion = Direccion.query.get(id)
-        if not direccion:
-            return jsonify({"error": "Dirección no encontrada"}), 404
+        address = Address.query.get(id)
+        if not address:
+            return jsonify({"error": "Dirección no encontrada."}), 404
 
-        # Verificar que el user_id coincida con el de la dirección
-        if direccion.user_id != user_id:
+        # Verificar que el company_id del usuario coincida con el de la dirección
+        if address.user_id != company_id:
             return jsonify({"error": "No tienes permiso para eliminar esta dirección"}), 403
 
         # Eliminar la dirección de la base de datos
-        db.session.delete(direccion)
+        db.session.delete(address)
         db.session.commit()
 
         # Retornar un mensaje de éxito
-        return jsonify({"message": "Dirección eliminada con éxito"}), 200
+        return jsonify({"message": "Dirección eliminada con éxito."}), 200
 
     except Exception as e:
-        print(f"Error en /api/direcciones/{id}: {e}")
+        print(f"Error en /api/addresses/{id}: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
+
+# Define el blueprint para el mensaje de contacto
+contact_bp = Blueprint('contact_messages', __name__)
+
 # Contact
-@api.route('/api/contact', methods=['POST'])
+@contact_bp.route('/api/contact', methods=['POST'])
 def submit_contact_form():
     try:
         data = request.get_json()
-        nombre = data.get('nombre')
+        id = data.get('id')
+        name = data.get('name')
         email = data.get('email')
-        telefono = data.get('telefono')
-        mensaje = data.get('mensaje')
+        phone = data.get('phone')
+        message = data.get('message')
+        created_at = data.get('created_at')
 
-        if not nombre or not email or not mensaje:
-            return jsonify({"error": "Nombre, email y mensaje son requeridos"}), 400
+        # Verifica que se haya nombre e email
+        if not name or not email:
+            return jsonify({"error": "Su nombre y dirección de correo electrónico son requeridos."}), 401
+
+        # Verifica que el mensaje tenga contenido
+        if not message:
+            return jsonify({"error": "El mensaje debe tener contenido."}), 402
 
         new_message = ContactMessage(
-            nombre=nombre,
+            name=name,
             email=email,
-            telefono=telefono,
-            mensaje=mensaje
+            phone=phone,
+            message=message,
+            created_at=created_at
         )
+
         db.session.add(new_message)
         db.session.commit()
 
-        return jsonify({"message": "Mensaje de contacto recibido exitosamente"}), 201
+        return jsonify({"message": "Mensaje de contacto enviado exitosamente"}), 201
 
     except Exception as e:
         print(f"Error en /api/contact: {e}")  # Imprime el error completo
         return jsonify({"error": "Error interno del servidor"}), 500
-    
-# Ruta GET para obtener la lista de todos los clientes
-@api.route('/api/clients', methods=['GET'])
+
+
+# Define el blueprint para los clientes
+clients_bp = Blueprint('clients', __name__)
+
+# Obtener la lista de todos los clientes
+@clients_bp.route('/api/clients', methods=['GET'])
 def get_clients():
-    clients = Client.query.all()
-    return jsonify([client.to_dict() for client in clients])
-# Ruta POST para agregar un nuevo cliente
-@api.route('/api/clients', methods=['POST'])
+    try:
+        # Obtener el company_id de los parámetros de la consulta
+        company_id = request.args.get('company_id')
+
+        if not company_id:
+            return jsonify({"error": "Su cuenta no está asignada a una compañía registrada. Por favor, contacte con el administrador."}), 405
+
+        # Filtrar los clientes por el company_id
+        clients = Client.query.filtery_by(company_id=company_id).all()
+
+        # Serializar los clientes
+        return jsonify([client.serialize() for client in clients])
+    
+    except Exception as e:
+        print(f"Error en /api/clients: {e}")
+        return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
+
+# Crear un nuevo cliente
+@clients_bp.route('/api/clients', methods=['POST'])
 def add_client():
-    data = request.get_json()
-# Verificación básica de datos
-    if not all(key in data for key in ('first_name', 'last_name', 'phone', 'email')):
-        abort(400, 'Missing required data')
-# Crear el nuevo cliente
-    new_client = Client(
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        phone=data['phone'],
-        email=data['email']
-    )
-    
-    db.session.add(new_client)
     try:
+        data = request.get_json()
+        print(f"Datos recibidos: {data}")  # Verifica qué datos está recibiendo la BD
+
+        # Obtener los campos del cuerpo de la solicitud
+        id = data.get('id')
+        first_name = data.get('first_name')
+        last_name = data.get('lastname')
+        nif = data.get('nif')
+        phone = data.get('phone')
+        email = data.get('email')
+        address = data.get('address')
+        company_id = data.get('company_id')
+        created_at = data.get('created_at')
+
+        # Obtener el company_id del cuerpo de la solicitud
+        company_id = data.get('company_id')
+
+        # Verificae que los campos obligatorios están presentes
+        if not first_name or not last_name:
+            return jsonify({"error": "Nombre y apellido son requeridos."}), 401
+        
+        # Verificar si la compañía existe
+        if not company_id:
+            return jsonify({"error": "Su usuario no está asignado a una compañía registrada. Por favor, contacte con el administrador."}), 405
+        
+        # Crear nueva instancia de Clients asociado a la compañía
+        new_client = Client(
+            id=id,
+            first_name=first_name, 
+            last_name=last_name,
+            nif=nif,
+            phone=phone,
+            email=email,
+            address=address,
+            company_id=company_id,
+            created_at=created_at
+        )
+
+        # Añadir y confirmar la transacción en la base de datos
+        db.session.add(new_client)
         db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        abort(400, 'Email already exists')
+
+        # Retornar la nueva dirección con el método serialize()
+        return jsonify(new_client.serialize()), 201
     
-    return jsonify(new_client.to_dict()), 201
-# Ruta PUT para actualizar un cliente existente
-@api.route('/api/clients/<int:id>', methods=['PUT'])
+    except Exception as e:
+        print(f"Error en /api/clients: {e}") # Imprime el error en la consola
+        return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
+
+# Editar cliente
+@clients_bp.route('/api/clients/<int:id>', methods=['PUT'])
 def update_client(id):
-    client = Client.query.get_or_404(id)
-    data = request.get_json()
-
-    client.first_name = data.get('first_name', client.first_name)
-    client.last_name = data.get('last_name', client.last_name)
-    client.phone = data.get('phone', client.phone)
-    client.email = data.get('email', client.email)
-
     try:
-        db.session.commit()
-    except IntegrityError:
-        db.session.rollback()
-        abort(400, 'Email already exists')
+        data = request.get_json()
+        print(f"Datos recibidos para actualizar: {data}")
 
-    return jsonify(client.to_dict())
+        # Obtener el company_id del cuerpo de la solicitud
+        company_id = data.get('company_id')
+
+        if not company_id:
+            return jsonify({"error": "Su cuenta debe estar asociada a una compañía registrada para esta operación."}), 405
+        
+        # Buscar el cliente existente
+        client = Client.query.get(id)
+        if not client:
+            return jsonify({"error": "Cliente no encontrado."}), 404
+        
+        # Verifica que el company_id del usuario coincida con el del cliente
+        if client.company_id != company_id:
+            return jsonify({"error": "No tienes permiso para editar esta dirección."}), 403
+        
+        #Actualizar los campos
+        client.first_name = data.get('first_name', client.first_name)
+        client.last_name = data.get('last_name', client.last_name)
+        client.nif = data.get('nif', client.nif)
+        client.phone = data.get('phone', client.phone)
+        client.email = data.get('email', client.email)
+        client.address = data.get('address', client.address)
+        client.company_id = data.get('company_id', client.company_id)
+        client.created_at = data.get('created_at', client.created_at)
+
+        # Confirmar la transacción en la base de datos
+        db.session.commit()
+
+        # Retornar la dirección actualizada
+        return jsonify(client.serialize()), 200
+    
+    except Exception as e:
+        print(f"Error en /api/clients/{id}: {e}")
+        return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
+
 # Ruta DELETE para eliminar un cliente por ID
 @api.route('/api/clients/<int:id>', methods=['DELETE'])
 def delete_client(id):
@@ -464,31 +554,31 @@ def delete_client(id):
     
     return '', 204
 
-# Parte "VEHICULOS"
+
 # Metodo "GET"
-@api.route('/api/vehiculos', methods=['GET'])
-def obtener_vehiculos():
+@api.route('/api/vehicles', methods=['GET'])
+def obtener_vehicles():
     try:
-        vehiculos = Vehiculo.query.all()  # Obtiene todos los vehículos de la base de datos
+        vehicles = Vehicle.query.all()  # Obtiene todos los vehículos de la base de datos
         return jsonify([{
-            'id': vehiculo.id,
-            'nombre': vehiculo.nombre,
-            'placa': vehiculo.placa,
-            'remolque': vehiculo.remolque,
-            'costo_km': vehiculo.costo_km,
-            'costo_hora': vehiculo.costo_hora,
-            'ejes': vehiculo.ejes,
-            'peso': vehiculo.peso,
-            'combustible': vehiculo.combustible,
-            'emision': vehiculo.emision,
-            'created_at': vehiculo.created_at.isoformat()  # Formatea la fecha
-        } for vehiculo in vehiculos]), 200
+            'id': vehicle.id,
+            'nombre': vehicle.nombre,
+            'placa': vehicles.placa,
+            'remolque': vehicle.remolque,
+            'costo_km': vehicle.costo_km,
+            'costo_hora': vehicle.costo_hora,
+            'ejes': vehicle.ejes,
+            'peso': vehicle.peso,
+            'combustible': vehicle.combustible,
+            'emision': vehicle.emision,
+            'created_at': vehicle.created_at.isoformat()  # Formatea la fecha
+        } for vehicle in vehicles]), 200
     except Exception as e:
         return {"error": str(e)}, 500  # Devuelve un error si ocurre un problema
 
 # Metodo "POST"
-@api.route('/api/vehiculos', methods=['POST'])
-def crear_vehiculo():
+@api.route('/api/vehicles', methods=['POST'])
+def crear_vehicle():
     data = request.json
 
     # Validación básica de datos
@@ -504,7 +594,7 @@ def crear_vehiculo():
     except ValueError:
         return {"error": "Los valores de costo_km, costo_hora, ejes y peso deben ser numéricos."}, 400
 
-    nuevo_vehiculo = Vehiculo(
+    nuevo_vehicle = Vehicle(
         nombre=data['nombre'],
         placa=data['placa'],
         remolque=data['remolque'],
@@ -518,7 +608,7 @@ def crear_vehiculo():
     )
     
     try:
-        db.session.add(nuevo_vehiculo)
+        db.session.add(nuevo_vehicle)
         db.session.commit()
         return {"message": "Vehículo creado exitosamente"}, 201
     except Exception as e:
@@ -526,35 +616,35 @@ def crear_vehiculo():
         return {"error": str(e)}, 500
 
 #METODO PUT
-@api.route('/api/vehiculos/<int:id>', methods=['PUT'])
-def editar_vehiculo(id):
-    vehiculo = Vehiculo.query.get(id)
+@api.route('/api/vehicles/<int:id>', methods=['PUT'])
+def editar_vehicle(id):
+    vehicle = vehicle.query.get(id)
     
-    if not vehiculo:
+    if not vehicle:
         return jsonify({"message": "Vehículo no encontrado"}), 404
 
     data = request.get_json()
 
-    vehiculo.nombre = data.get('nombre', vehiculo.nombre)
-    vehiculo.placa = data.get('placa', vehiculo.placa)
-    vehiculo.remolque = data.get('remolque', vehiculo.remolque)
-    vehiculo.costo_km = data.get('costo_km', vehiculo.costo_km)
-    vehiculo.costo_hora = data.get('costo_hora', vehiculo.costo_hora)
-    vehiculo.ejes = data.get('ejes', vehiculo.ejes)
-    vehiculo.peso = data.get('peso', vehiculo.peso)
-    vehiculo.combustible = data.get('combustible', vehiculo.combustible)
-    vehiculo.emision = data.get('emision', vehiculo.emision)
+    vehicle.nombre = data.get('nombre', vehicle.nombre)
+    vehicle.placa = data.get('placa', vehicle.placa)
+    vehicle.remolque = data.get('remolque', vehicle.remolque)
+    vehicle.costo_km = data.get('costo_km', vehicle.costo_km)
+    vehicle.costo_hora = data.get('costo_hora', vehicle.costo_hora)
+    vehicle.ejes = data.get('ejes', vehicle.ejes)
+    vehicle.peso = data.get('peso', vehicle.peso)
+    vehicle.combustible = data.get('combustible', vehicle.combustible)
+    vehicle.emision = data.get('emision', vehicle.emision)
 
     db.session.commit()
     
     return jsonify({"message": "Vehículo actualizado exitosamente"}), 200
 
 #METODO DELETE
-@api.route('/api/vehiculos/<int:id>', methods=['DELETE'])
-def delete_vehiculo(id):
-    vehiculo = Vehiculo.query.get(id)
-    if vehiculo:
-        db.session.delete(vehiculo)
+@api.route('/api/vehicles/<int:id>', methods=['DELETE'])
+def delete_vehicle(id):
+    vehicle = vehicle.query.get(id)
+    if vehicle:
+        db.session.delete(vehicle)
         db.session.commit()
         return jsonify({'message': 'Vehículo eliminado exitosamente.'}), 200
     else:
@@ -582,12 +672,12 @@ def update_user(user_id):
     return jsonify(user.serialize()), 200
 
 
-# Define el blueprint para los socios
-socios_bp = Blueprint('socios', __name__)
+# Define el blueprint para los partners
+partners_bp = Blueprint('partners', __name__)
 
-# Obtener todos los socios de un usuario
-@socios_bp.route('/api/socios', methods=['GET'])    
-def obtener_socios():
+# Obtener todos los partners de un usuario
+@partners_bp.route('/api/partners', methods=['GET'])    
+def obtener_partners():
     try:
         # Obtener el user_id de los parámetros de la consulta (query string)
         user_id = request.args.get('user_id')
@@ -596,18 +686,18 @@ def obtener_socios():
             return jsonify({"error": "Falta el parámetro 'user_id'"}), 400
 
         # Filtrar los socios por el user_id
-        socios = Socio.query.filter_by(user_id=user_id).all()
+        partners = Partner.query.filter_by(user_id=user_id).all()
 
         # Serializar los socios
-        return jsonify([socio.serialize() for socio in socios]), 200
+        return jsonify([partner.serialize() for partner in partners]), 200
 
     except Exception as e:
-        print(f"Error en /api/socios: {e}")
+        print(f"Error en /api/partners: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
 # Crear un nuevo socio
-@socios_bp.route('/api/socios', methods=['POST'])
-def agregar_socio():
+@partners_bp.route('/api/partners', methods=['POST'])
+def agregar_partner():
     try:
         # Obtener datos del cuerpo de la petición (request body)
         data = request.get_json()
@@ -625,7 +715,7 @@ def agregar_socio():
             return jsonify({'error': 'Faltan datos'}), 400
 
         # Crear un nuevo socio
-        nuevo_socio = Socio(
+        nuevo_partner = Partner(
             nombre=nombre,
             email=email,
             tipo_precio=tipo_precio,
@@ -635,65 +725,65 @@ def agregar_socio():
             user_id=user_id,
         )
 
-        # Agregar el socio a la base de datos
-        db.session.add(nuevo_socio)
+        # Agregar el partner a la base de datos
+        db.session.add(nuevo_partner)
         db.session.commit()
 
         # Devolver respuesta
-        return jsonify({'mensaje': 'Socio agregado exitosamente', 'socio': nuevo_socio.serialize()}), 201
+        return jsonify({'mensaje': 'Socio agregado exitosamente', 'partner': nuevo_partner.serialize()}), 201
 
     except Exception as e:
-        print(f"Error en /api/socios: {e}")
+        print(f"Error en /api/partners: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
 # Editar un socio
-@socios_bp.route('/api/socios/<email>', methods=['PUT'])
-def editar_socio(email):
+@partners_bp.route('/api/partners/<email>', methods=['PUT'])
+def editar_partner(email):
     try:
         # Buscar el socio por su email
-        socio = Socio.query.filter_by(email=email).first()
+        partner = partner.query.filter_by(email=email).first()
 
-        if not socio:
-            return jsonify({'error': 'Socio no encontrado'}), 404
+        if not partner:
+            return jsonify({'error': 'partner no encontrado'}), 404
 
         # Obtener datos del cuerpo de la petición
         data = request.get_json()
 
         # Actualizar los datos del socio
-        socio.nombre = data.get('nombre', socio.nombre)
-        socio.tipo_precio = data.get('tipo_precio', socio.tipo_precio)
-        socio.precio = data.get('precio', socio.precio)
-        socio.periodos_espera = data.get('periodos_espera', socio.periodos_espera)
-        socio.incluir_peajes = data.get('incluir_peajes', socio.incluir_peajes)
-        socio.user_id = data.get('user_id', socio.user_id)
+        partner.nombre = data.get('nombre', partner.nombre)
+        partner.tipo_precio = data.get('tipo_precio', partner.tipo_precio)
+        partner.precio = data.get('precio', partner.precio)
+        partner.periodos_espera = data.get('periodos_espera', partner.periodos_espera)
+        partner.incluir_peajes = data.get('incluir_peajes', partner.incluir_peajes)
+        partner.user_id = data.get('user_id', partner.user_id)
         
 
         # Guardar los cambios en la base de datos
         db.session.commit()
 
-        return jsonify({'mensaje': 'Socio actualizado exitosamente', 'socio': socio.serialize()}), 200
+        return jsonify({'mensaje': 'Socio actualizado exitosamente', 'partner': partner.serialize()}), 200
 
     except Exception as e:
-        print(f"Error en /api/socios/<email>: {e}")
+        print(f"Error en /api/partners/<email>: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
 # Eliminar un socio
-@socios_bp.route('/api/socios/<email>', methods=['DELETE'])
-def eliminar_socio(email):
+@partners_bp.route('/api/partners/<email>', methods=['DELETE'])
+def eliminar_partner(email):
     try:
         # Buscar el socio por su email
-        socio = Socio.query.filter_by(email=email).first()
+        partner = partner.query.filter_by(email=email).first()
 
-        if not socio:
+        if not partner:
             return jsonify({'error': 'Socio no encontrado'}), 404
 
         # Eliminar el socio de la base de datos
-        db.session.delete(socio)
+        db.session.delete(partner)
         db.session.commit()
 
         return jsonify({'mensaje': 'Socio eliminado exitosamente'}), 200
 
     except Exception as e:
-        print(f"Error en /api/socios/<email>: {e}")
+        print(f"Error en /api/partners/<email>: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 

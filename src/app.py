@@ -5,7 +5,7 @@ from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
 from api.models import db, User
-from api.routes import api, direcciones_bp, socios_bp
+from api.routes import api, addresses_bp, partners_bp
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
@@ -41,9 +41,9 @@ db.init_app(app)
 # Añade el blueprint de la API
 app.register_blueprint(api)
 # Registra el blueprint de direcciones
-app.register_blueprint(direcciones_bp)
+app.register_blueprint(addresses_bp)
 # Registrar el Blueprint de socios
-app.register_blueprint(socios_bp)
+app.register_blueprint(partners_bp)
 
 
 # Handle/serialize errors like a JSON object
