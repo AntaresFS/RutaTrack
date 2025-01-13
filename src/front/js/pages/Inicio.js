@@ -4,6 +4,7 @@ import axios from "axios";
 import "../../styles/home.css";
 import { Modal } from "../component/modal";
 
+
 const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
 const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
@@ -15,8 +16,8 @@ export const Inicio = () => {
 
     const [registerData, setRegisterData] = useState({
         name: "",
-        lastName: "",
-        company: "",
+        last_name: "",
+        company_name: "",
         location: "",
         email: "",
         password: "",

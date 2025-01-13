@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.sql import func
 from flask_jwt_extended import JWTManager
 from pytz import timezone
 import pytz
@@ -27,7 +28,7 @@ class Company(db.Model):
     address = db.Column(db.String(120), unique=False, nullable=True)
     phone = db.Column(db.String(24), unique=False, nullable=True)
     email = db.Column(db.String(34), unique=False, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc)) 
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False) # Valor por defecto asignado por la BD
 
     def __init__(self, name, nif=None, address=None, phone=None, email=None, created_at=None):
         self.name = name
@@ -93,20 +94,18 @@ class User(db.Model):
     last_name = db.Column(db.String(100), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
     location = db.Column(db.String(150), nullable=True)
-    timezone = db.Column(db.String(64), nullable=True, default="UTC")
-    created_at = db.Column(db.DateTime, default=db.func.now())  # Valor por defecto asignado por la BD
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)  
 
     # Relación uno a muchos con Company
     company = db.relationship('Company', backref='users', lazy='select')
 
-    def __init__(self, email, password_hash, name=None, last_name=None, company_id=None, location=None, timezone=None, created_at=None):
+    def __init__(self, email, password_hash, name=None, last_name=None, company_id=None, location=None, created_at=None):
         self.email = email
         self.password_hash = password_hash
         self.name = name
         self.last_name = last_name
         self.company_id = company_id
         self.location = location
-        self.timezone = timezone
         self.created_at = created_at
 
     def serialize(self):
@@ -117,7 +116,6 @@ class User(db.Model):
             'last_name': self.last_name,
             'company_id' : self.company_id,
             'location': self.location,
-            'timezone' : self.timezone, 
             'created_at': self.created_at.isoformat()  # Convertir a formato ISO
         }
 
@@ -132,7 +130,7 @@ class Address(db.Model):
     contact = db.Column(db.String(100), nullable=True)
     comments = db.Column(db.Text, nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='addresses', lazy='select')
@@ -166,7 +164,7 @@ class ContactMessage(db.Model):
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20))
     message = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     def __init__(self, name, email, message, phone=None, created_at=None):
         self.name = name
@@ -197,7 +195,7 @@ class Client(db.Model):
     email = db.Column(db.String(120), nullable=True)
     address = db.Column(db.String(120), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     # Restricción única compuesta: (user_id, nif)
     # Un mismo usuario sólo puede dar de alta un mismo NIF como cliente
@@ -243,7 +241,7 @@ class Vehicle(db.Model):
     fuel = db.Column(db.String(50), nullable=True)
     emissions = db.Column(db.String(50), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
     
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='vehicles', lazy='select')
@@ -290,7 +288,7 @@ class Partner(db.Model):
     include_tolls = db.Column(db.Boolean, default=False)
     company = db.Column(db.String(100), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='partners', lazy='select')

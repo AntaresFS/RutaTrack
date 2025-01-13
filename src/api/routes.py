@@ -8,14 +8,14 @@ import datetime
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt, create_access_token
 import pytz
 
 # Habilita CORS para todas las rutas y orígenes
 api = Blueprint('api', __name__)
 CORS(api, supports_credentials=True)
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'tu_clave_secreta')  # Usa una variable de entorno para mayor seguridad
+SECRET_KEY = os.getenv('SECRET_KEY', 'tu_clave_secreta')  # Usar una variable de entorno para mayor seguridad  !!
 RESET_SECRET_KEY = os.getenv('RESET_SECRET_KEY', 'tu_clave_secreta_reset')
 MAIL_SENDER = os.getenv('MAIL_SENDER', 'your-email@example.com')
 
@@ -50,21 +50,20 @@ def create_user():
         print(data)
 
         # Extraer los datos del formulario
-        email = data.get('email')
-        password_hash = data.get('password_hash')
         name = data.get('name')
         last_name = data.get('last_name')
-        company_name = data.get('company_name') 
-        company_id = data.get('company_id') 
+        company_name = data.get('company_name')
         location = data.get('location')
-        timezone = data.get('timezone', 'UTC')  # Usar 'UTC' como valor por defecto
-        created_at = data.get('created_at', datetime.datetime.utcnow().isoformat())  # Default to current UTC time
+        email = data.get('email')
+        password = data.get('password')        
 
         # Validaciones de los campos obligatorios
-        if not email or not password_hash:
-            return jsonify({"error": "Email y contraseña son requeridos"}), 400
+        if not email or not password:
+            return jsonify({"error": "'Email' y 'Contraseña' son campos requeridos."}), 400
         if not name or not last_name:
-            return jsonify({"error": "Nombre y apellido son requeridos"}), 400
+            return jsonify({"error": "'Nombre' y 'Apellido' son campos requeridos."}), 400
+        if not company_name:
+            return jsonify({"error": "'Compañía' es un campo requerido."}), 400
 
     
         # Verificar si el correo ya está registrado
@@ -79,30 +78,32 @@ def create_user():
             company = Company(name=company_name)
             db.session.add(company)
             db.session.commit()  # Asegurarse de que la compañía se guarde antes de asociarla
-        
+
+        # Hashear la contraseña antes de almacenarla
+        hashed_password = generate_password_hash(password)
 
         # Crear el usuario
         new_user = User(
             email=email,
-            password_hash=generate_password_hash(password_hash),
+            password_hash=hashed_password,
             name=name,
-            last_name=last_name,
-            company=company,  # Asignar la compañía al usuario
-            company_id=company_id,
+            last_name=last_name, 
+            company_id=company.id, # Asociar la compañía al usuario
             location=location,
-            timezone=timezone,
-            created_at=datetime.datetime.fromisoformat(created_at).astimezone(pytz.utc)  # Convertir la fecha a UTC
         )
-
-        # Asociar la compañía al usuario usando company_id
-        new_user.company_id = company.id
 
         # Agregar el usuario a la base de datos
         db.session.add(new_user)
         db.session.commit()
 
-        # Respuesta exitosa
-        return jsonify({"message": "Usuario registrado exitosamente"}), 201
+         # Crear un token JWT incluyendo el company_id
+        access_token = create_access_token(identity=new_user.id, additional_claims={"company_id": company.id})
+
+        # Respuesta exitosa con el token
+        return jsonify({
+            "message": "Usuario registrado exitosamente",
+            "token": access_token
+        }), 201
 
     except KeyError as e:
         return jsonify({"error": f"Falta el campo: {str(e)}"}), 400
@@ -242,13 +243,38 @@ def reset_password(token):
         print(f"Error en /api/reset-password: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
       
+
+# Define el blueprint para las compañías
+companies_bp = Blueprint('companies', __name__)
+
+# Obtener todas las compañías registradas
+@companies_bp.route('/api/companies', methods=['GET'])
+def get_companies():
+    try:
+        companies = Company.query.all()
+        return jsonify([company.serialize() for company in companies]), 200
+    except Exception as e:
+        print(f"Error en /api/companies: {e}")
+        return jsonify({"error": "Error interno del servidor"}), 500
+
+
 # Define el blueprint para las direcciones
 addresses_bp = Blueprint('addresses', __name__)
 
 # Obtener todas las direcciones de la compañía
 @addresses_bp.route('/api/addresses', methods=['GET'])
+# @jwt_required()
 def get_addresses():
+
+    # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+    
     try:
+
         # Obtener el company_id de los parámetros de la consulta (query string)
         company_id = request.args.get('company_id')
 
@@ -268,6 +294,14 @@ def get_addresses():
 # Añadir nueva dirección
 @addresses_bp.route('/api/addresses', methods=['POST'])
 def add_address():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         data = request.get_json()
         print(f"Datos recibidos: {data}")  # Verifica qué datos está recibiendo la BD
@@ -319,6 +353,14 @@ def add_address():
 # Editar dirección
 @addresses_bp.route('/api/addresses/<int:id>', methods=['PUT'])
 def update_address(id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         data = request.get_json()
         print(f"Datos recibidos para actualizar: {data}")
@@ -358,6 +400,14 @@ def update_address(id):
 # Eliminar dirección
 @addresses_bp.route('/api/addresses/<int:id>', methods=['DELETE'])
 def delete_direccion(id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         data = request.get_json()
         company_id = data.get('company_id')
@@ -433,6 +483,14 @@ clients_bp = Blueprint('clients', __name__)
 # Obtener la lista de todos los clientes
 @clients_bp.route('/api/clients', methods=['GET'])
 def get_clients():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         # Obtener el company_id de los parámetros de la consulta
         company_id = request.args.get('company_id')
@@ -453,6 +511,14 @@ def get_clients():
 # Crear un nuevo cliente
 @clients_bp.route('/api/clients', methods=['POST'])
 def add_client():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         data = request.get_json()
         print(f"Datos recibidos: {data}")  # Verifica qué datos está recibiendo la BD
@@ -506,6 +572,14 @@ def add_client():
 # Editar cliente
 @clients_bp.route('/api/clients/<int:id>', methods=['PUT'])
 def update_client(id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         data = request.get_json()
         print(f"Datos recibidos para actualizar: {data}")
@@ -548,6 +622,14 @@ def update_client(id):
 # Ruta DELETE para eliminar un cliente por ID
 @api.route('/api/clients/<int:id>', methods=['DELETE'])
 def delete_client(id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     client = Client.query.get_or_404(id)
     db.session.delete(client)
     db.session.commit()
@@ -558,19 +640,28 @@ def delete_client(id):
 # Metodo "GET"
 @api.route('/api/vehicles', methods=['GET'])
 def obtener_vehicles():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         vehicles = Vehicle.query.all()  # Obtiene todos los vehículos de la base de datos
         return jsonify([{
             'id': vehicle.id,
-            'nombre': vehicle.nombre,
-            'placa': vehicles.placa,
-            'remolque': vehicle.remolque,
-            'costo_km': vehicle.costo_km,
-            'costo_hora': vehicle.costo_hora,
-            'ejes': vehicle.ejes,
-            'peso': vehicle.peso,
-            'combustible': vehicle.combustible,
-            'emision': vehicle.emision,
+            'name': vehicle.name,
+            'plate': vehicles.plate,
+            'tow': vehicle.tow,
+            'cost_km': vehicle.cost_km,
+            'cost_hour': vehicle.cost_hour,
+            'axles': vehicle.axles,
+            'weight': vehicle.weight,
+            'fuel': vehicle.fuel,
+            'emissions': vehicle.emissions,
+            'company_id': vehicle.company_id,
             'created_at': vehicle.created_at.isoformat()  # Formatea la fecha
         } for vehicle in vehicles]), 200
     except Exception as e:
@@ -579,31 +670,40 @@ def obtener_vehicles():
 # Metodo "POST"
 @api.route('/api/vehicles', methods=['POST'])
 def crear_vehicle():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     data = request.json
 
     # Validación básica de datos
-    if not all(key in data for key in ['nombre', 'placa', 'remolque', 'costo_km', 'costo_hora', 'ejes', 'peso', 'combustible', 'emision']):
-        return {"error": "Faltan campos requeridos"}, 400  # Bad Request
+    if not all(key in data for key in ['name', 'plate']):
+        return {"error": "Faltan campos requeridos: Nombre y Matrícula son datos obligatorios."}, 400  # Bad Request
 
     # Validación de campos numéricos
     try:
-        costo_km = float(data['costo_km']) if data['costo_km'] else None
-        costo_hora = float(data['costo_hora']) if data['costo_hora'] else None
-        ejes = int(data['ejes']) if data['ejes'] else None
-        peso = float(data['peso']) if data['peso'] else None
+        cost_km = float(data['cost_km']) if data['cost_km'] else None
+        cost_hour = float(data['cost_hour']) if data['cost_hour'] else None
+        axles = int(data['axles']) if data['axles'] else None
+        weight = float(data['weight']) if data['weight'] else None
     except ValueError:
-        return {"error": "Los valores de costo_km, costo_hora, ejes y peso deben ser numéricos."}, 400
+        return {"error": "Los valores de Costo por Km, Costo por hora, Ejes y Peso deben ser numéricos."}, 400
 
     nuevo_vehicle = Vehicle(
-        nombre=data['nombre'],
-        placa=data['placa'],
-        remolque=data['remolque'],
-        costo_km=costo_km,
-        costo_hora=costo_hora,
-        ejes=ejes,
-        peso=peso,
-        combustible=data['combustible'],
-        emision=data['emision'],
+        name=data['name'],
+        plate=data['plate'],
+        tow=data['tow'],
+        costkm=cost_km,
+        cost_hour=cost_hour,
+        axles=axles,
+        weight=weight,
+        fuel=data['fuel'],
+        emissions=data['emissions'],
+        company_id=data['company_id'],
         user_id=data['user_id']
     )
     
@@ -618,6 +718,14 @@ def crear_vehicle():
 #METODO PUT
 @api.route('/api/vehicles/<int:id>', methods=['PUT'])
 def editar_vehicle(id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     vehicle = vehicle.query.get(id)
     
     if not vehicle:
@@ -642,6 +750,14 @@ def editar_vehicle(id):
 #METODO DELETE
 @api.route('/api/vehicles/<int:id>', methods=['DELETE'])
 def delete_vehicle(id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     vehicle = vehicle.query.get(id)
     if vehicle:
         db.session.delete(vehicle)
@@ -654,6 +770,14 @@ def delete_vehicle(id):
 #EDITAR LOS DATOS DEL USUARIO DESDE "MI PERFIL"
 @api.route('/api/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     data = request.get_json()
     user = User.query.get(user_id)
 
@@ -678,6 +802,14 @@ partners_bp = Blueprint('partners', __name__)
 # Obtener todos los partners de un usuario
 @partners_bp.route('/api/partners', methods=['GET'])    
 def obtener_partners():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         # Obtener el user_id de los parámetros de la consulta (query string)
         user_id = request.args.get('user_id')
@@ -698,6 +830,14 @@ def obtener_partners():
 # Crear un nuevo socio
 @partners_bp.route('/api/partners', methods=['POST'])
 def agregar_partner():
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         # Obtener datos del cuerpo de la petición (request body)
         data = request.get_json()
@@ -739,6 +879,14 @@ def agregar_partner():
 # Editar un socio
 @partners_bp.route('/api/partners/<email>', methods=['PUT'])
 def editar_partner(email):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         # Buscar el socio por su email
         partner = partner.query.filter_by(email=email).first()
@@ -770,6 +918,14 @@ def editar_partner(email):
 # Eliminar un socio
 @partners_bp.route('/api/partners/<email>', methods=['DELETE'])
 def eliminar_partner(email):
+
+        # Obtener el ID de la compañía desde el token
+    # claims = get_jwt()
+    # company_id = claims.get('company_id')
+
+    # if not company_id:
+        # return jsonify({"error": "Su usuario no está asociado a una compañía registrada. Por favor, contacte con el Administrador."}), 403
+
     try:
         # Buscar el socio por su email
         partner = partner.query.filter_by(email=email).first()
