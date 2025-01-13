@@ -19,9 +19,52 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+class User(db.Model):
+    # Nombre de la tabla en la base de datos
+    __tablename__ = 'users'
+
+    # Contenido de la tabla en la base de datos
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    location = db.Column(db.String(150), nullable=True)
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)  
+
+    # Relación uno a muchos con Company
+    company = db.relationship('Company', backref='users', lazy='select')
+
+    # Inicializar instancia de users
+    def __init__(self, email, password_hash, name, last_name, company_id, location=None, created_at=None):
+        self.email = email
+        self.password_hash = password_hash
+        self.name = name
+        self.last_name = last_name
+        self.company_id = company_id
+        self.location = location
+        self.created_at = created_at
+
+    # Serializar la info de User para convertirla en un diccionario de Python
+    def serialize(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'name': self.name,
+            'last_name': self.last_name,
+            'company_id' : self.company_id,
+            'location': self.location,
+            'created_at': self.created_at.isoformat()  # Convertir a formato ISO
+        }
+
+
 class Company(db.Model):
+
+    # Nombre de la tabla en la base de datos
     __tablename__ = 'companies'
 
+    # Contenido de la tabla en la base de datos
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     nif = db.Column(db.String(9), unique=True, nullable=True)
@@ -30,14 +73,16 @@ class Company(db.Model):
     email = db.Column(db.String(34), unique=False, nullable=True)
     created_at = db.Column(db.DateTime, default=func.now(), nullable=False) # Valor por defecto asignado por la BD
 
+    # Inicializar instancia de users
     def __init__(self, name, nif=None, address=None, phone=None, email=None, created_at=None):
         self.name = name
         self.nif = nif
         self.address = address
         self.phone = phone
         self.email = email
-        self.created_at = created_at
+        self.created_at = created_at or func.now()
 
+    # Serializar la info de User para convertirla en un diccionario de Python 
     def serialize(self):
         return {
             'id' : self.id,
@@ -46,7 +91,7 @@ class Company(db.Model):
             'address' : self.address,
             'phone' : self.phone,
             'email' : self.email, 
-            'created_at' : self.created_at,
+            'created_at' : self.created_at.isoformat(),  # Convierte este valor en formato ISO
 
             # Elementos de otras clases relacionados
             'users' : [user.serialize() for user in self.users],
@@ -84,40 +129,6 @@ class Company(db.Model):
             if existing_nif:
                 raise ValueError("El NIF ya está registrado.")
 
-class User(db.Model):
-    __tablename__ = 'users'
-
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    name = db.Column(db.String(100), nullable=True)
-    last_name = db.Column(db.String(100), nullable=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    location = db.Column(db.String(150), nullable=True)
-    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)  
-
-    # Relación uno a muchos con Company
-    company = db.relationship('Company', backref='users', lazy='select')
-
-    def __init__(self, email, password_hash, name=None, last_name=None, company_id=None, location=None, created_at=None):
-        self.email = email
-        self.password_hash = password_hash
-        self.name = name
-        self.last_name = last_name
-        self.company_id = company_id
-        self.location = location
-        self.created_at = created_at
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'name': self.name,
-            'last_name': self.last_name,
-            'company_id' : self.company_id,
-            'location': self.location,
-            'created_at': self.created_at.isoformat()  # Convertir a formato ISO
-        }
 
 
 class Address(db.Model):

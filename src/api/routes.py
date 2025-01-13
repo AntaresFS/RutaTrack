@@ -22,8 +22,8 @@ MAIL_SENDER = os.getenv('MAIL_SENDER', 'your-email@example.com')
 mail = Mail()
 serializer = URLSafeTimedSerializer(RESET_SECRET_KEY)
 
-# Endpoint para decir hola
 
+# Endpoint para decir hola
 @api.route('/api/hello', methods=['GET', 'POST'])
 def handle_hello():
     response_body = {
@@ -31,15 +31,21 @@ def handle_hello():
     }
     return jsonify(response_body), 200
 
+
+# USUARIOS + REGISTER/LOGIN
+
 # Obtener todos los usuarios
 @api.route('/api/usuarios', methods=['GET'])
+@jwt_required
 def get_all_users():
+
     try:
         users = User.query.all()
         return jsonify([user.serialize() for user in users]), 200
     except Exception as e:
         print(f"Error en /api/usuarios: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
+
 
 # Registrar un nuevo usuario
 @api.route('/api/register', methods=['POST'])
@@ -111,6 +117,7 @@ def create_user():
         print(f"Error en /api/register: {e}")
         return jsonify({"error": f"Ocurrió un error inesperado: {str(e)}"}), 500
 
+
 # Endpoint para iniciar sesión
 @api.route('/api/login', methods=['POST'])
 def login_user():
@@ -119,22 +126,27 @@ def login_user():
 
         # Validación de datos
         if not data or not isinstance(data, dict):
-            return jsonify({"error": "Datos inválidos"}), 400
+            return jsonify({"error": "Datos inválidos. Se esperaba un JSON válido"}), 400
 
         email = data.get('email', '').strip().lower()
         password = data.get('password', '').strip()
 
         if not email or not password:
-            return jsonify({"error": "Email y contraseña son requeridos"}), 400
+            return jsonify({"error": "El email y la contraseña son requeridos"}), 400
 
         # Busca el usuario en la base de datos
         user = User.query.filter_by(email=email).first()
-        if not user or not check_password_hash(user.password_hash, password):
-            return jsonify({"error": "Credenciales incorrectas"}), 401
+        if not user:
+            return jsonify({"error": "El usuario no existe. Verifica el email ingresado."}), 404        
+        
+        # Verifica la contraseña
+        if not check_password_hash(user.password_hash, password):
+            return jsonify({"error": "La contraseña ingresada es incorrecta."}), 401
 
         # Genera el token JWT
         token = jwt.encode({
             'user_id': user.id,
+            'company_id': user.company_id,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }, SECRET_KEY, algorithm='HS256')
 
@@ -143,7 +155,8 @@ def login_user():
             'user': {
                 'id': user.id,
                 'email': user.email,
-                'name': user.name  # Cambia según tus campos en el modelo
+                'name': user.name,  
+                'company_id': user.company_id
             }
         }))
         response.set_cookie(
@@ -156,9 +169,20 @@ def login_user():
         )
         return response
 
+    # Si falta una clave esperada en el JSON
+    except Exception as e:
+        api.logger.error(f"Clave faltante en /api/login: {e}")
+        return jsonify({"error": "Faltan campos obligatorios en el cuerpo de la solicitud."}), 400
+    
+    # Para errores de validación o conversión de datos
+    except ValueError as e:
+        api.logger.error(f"Valor inválido en /api/login: {e}")
+        return jsonify({"error": "Hubo un problema con los datos proporcionados."}), 400
+
+    # Captura cualquier otro error inesperado
     except Exception as e:
         api.logger.error(f"Error en /api/login: {e}")
-        return jsonify({"error": "Error interno del servidor"}), 500
+        return jsonify({"error": "Error interno del servidor. Por favor, intenta nuevamente más tarde."}), 500
 
 
 # Obtener datos del usuario autenticado (con JWT)
@@ -192,6 +216,7 @@ def get_user_profile():
         print(f"Error en /api/user: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
 
+
 # Solicitar recuperación de contraseña
 @api.route('/api/forgot-password', methods=['POST'])
 def forgot_password():
@@ -214,6 +239,7 @@ def forgot_password():
     except Exception as e:
         print(f"Error en /api/forgot-password: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
+
 
 # Restablecer contraseña
 @api.route('/api/reset-password/<token>', methods=['POST'])
@@ -244,6 +270,8 @@ def reset_password(token):
         return jsonify({"error": "Error interno del servidor"}), 500
       
 
+# COMPAÑÍAS
+
 # Define el blueprint para las compañías
 companies_bp = Blueprint('companies', __name__)
 
@@ -257,6 +285,9 @@ def get_companies():
         print(f"Error en /api/companies: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
 
+
+
+# DIRECCIONES
 
 # Define el blueprint para las direcciones
 addresses_bp = Blueprint('addresses', __name__)
@@ -290,7 +321,8 @@ def get_addresses():
     except Exception as e:
         print(f"Error en /api/addresses: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
-    
+
+
 # Añadir nueva dirección
 @addresses_bp.route('/api/addresses', methods=['POST'])
 def add_address():
@@ -350,6 +382,7 @@ def add_address():
         print(f"Error en /api/addresses: {e}")  # Esto imprimirá el error en la consola
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
+
 # Editar dirección
 @addresses_bp.route('/api/addresses/<int:id>', methods=['PUT'])
 def update_address(id):
@@ -396,7 +429,8 @@ def update_address(id):
     except Exception as e:
         print(f"Error en /api/addresses/{id}: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
-    
+
+
 # Eliminar dirección
 @addresses_bp.route('/api/addresses/<int:id>', methods=['DELETE'])
 def delete_direccion(id):
@@ -436,46 +470,8 @@ def delete_direccion(id):
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
 
-# Define el blueprint para el mensaje de contacto
-contact_bp = Blueprint('contact_messages', __name__)
 
-# Contact
-@contact_bp.route('/api/contact', methods=['POST'])
-def submit_contact_form():
-    try:
-        data = request.get_json()
-        id = data.get('id')
-        name = data.get('name')
-        email = data.get('email')
-        phone = data.get('phone')
-        message = data.get('message')
-        created_at = data.get('created_at')
-
-        # Verifica que se haya nombre e email
-        if not name or not email:
-            return jsonify({"error": "Su nombre y dirección de correo electrónico son requeridos."}), 401
-
-        # Verifica que el mensaje tenga contenido
-        if not message:
-            return jsonify({"error": "El mensaje debe tener contenido."}), 402
-
-        new_message = ContactMessage(
-            name=name,
-            email=email,
-            phone=phone,
-            message=message,
-            created_at=created_at
-        )
-
-        db.session.add(new_message)
-        db.session.commit()
-
-        return jsonify({"message": "Mensaje de contacto enviado exitosamente"}), 201
-
-    except Exception as e:
-        print(f"Error en /api/contact: {e}")  # Imprime el error completo
-        return jsonify({"error": "Error interno del servidor"}), 500
-
+# CLIENTES
 
 # Define el blueprint para los clientes
 clients_bp = Blueprint('clients', __name__)
@@ -569,6 +565,7 @@ def add_client():
         print(f"Error en /api/clients: {e}") # Imprime el error en la consola
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
+
 # Editar cliente
 @clients_bp.route('/api/clients/<int:id>', methods=['PUT'])
 def update_client(id):
@@ -619,7 +616,8 @@ def update_client(id):
         print(f"Error en /api/clients/{id}: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
-# Ruta DELETE para eliminar un cliente por ID
+
+# Eliminar un cliente
 @api.route('/api/clients/<int:id>', methods=['DELETE'])
 def delete_client(id):
 
@@ -633,9 +631,11 @@ def delete_client(id):
     client = Client.query.get_or_404(id)
     db.session.delete(client)
     db.session.commit()
-    
     return '', 204
 
+
+
+# VEHÍCULOS
 
 # Metodo "GET"
 @api.route('/api/vehicles', methods=['GET'])
@@ -666,6 +666,7 @@ def obtener_vehicles():
         } for vehicle in vehicles]), 200
     except Exception as e:
         return {"error": str(e)}, 500  # Devuelve un error si ocurre un problema
+
 
 # Metodo "POST"
 @api.route('/api/vehicles', methods=['POST'])
@@ -715,6 +716,7 @@ def crear_vehicle():
         db.session.rollback()
         return {"error": str(e)}, 500
 
+
 #METODO PUT
 @api.route('/api/vehicles/<int:id>', methods=['PUT'])
 def editar_vehicle(id):
@@ -746,6 +748,7 @@ def editar_vehicle(id):
     db.session.commit()
     
     return jsonify({"message": "Vehículo actualizado exitosamente"}), 200
+
 
 #METODO DELETE
 @api.route('/api/vehicles/<int:id>', methods=['DELETE'])
@@ -796,6 +799,8 @@ def update_user(user_id):
     return jsonify(user.serialize()), 200
 
 
+# COLABORADORES
+
 # Define el blueprint para los partners
 partners_bp = Blueprint('partners', __name__)
 
@@ -827,7 +832,8 @@ def obtener_partners():
         print(f"Error en /api/partners: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
-# Crear un nuevo socio
+
+# Crear un nuevo colaborador
 @partners_bp.route('/api/partners', methods=['POST'])
 def agregar_partner():
 
@@ -876,7 +882,7 @@ def agregar_partner():
         print(f"Error en /api/partners: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
-# Editar un socio
+# Editar un colaborador
 @partners_bp.route('/api/partners/<email>', methods=['PUT'])
 def editar_partner(email):
 
@@ -915,7 +921,7 @@ def editar_partner(email):
         print(f"Error en /api/partners/<email>: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
 
-# Eliminar un socio
+# Eliminar un colaborador
 @partners_bp.route('/api/partners/<email>', methods=['DELETE'])
 def eliminar_partner(email):
 
@@ -942,4 +948,48 @@ def eliminar_partner(email):
     except Exception as e:
         print(f"Error en /api/partners/<email>: {e}")
         return jsonify({"error": f"Ocurrió un error en el servidor: {str(e)}"}), 500
+
+
+
+# CONTACTO
+
+# Define el blueprint para el mensaje de contacto
+contact_bp = Blueprint('contact_messages', __name__)
+
+# Contact
+@contact_bp.route('/api/contact', methods=['POST'])
+def submit_contact_form():
+    try:
+        data = request.get_json()
+        id = data.get('id')
+        name = data.get('name')
+        email = data.get('email')
+        phone = data.get('phone')
+        message = data.get('message')
+        created_at = data.get('created_at')
+
+        # Verifica que se haya nombre e email
+        if not name or not email:
+            return jsonify({"error": "Su nombre y dirección de correo electrónico son requeridos."}), 401
+
+        # Verifica que el mensaje tenga contenido
+        if not message:
+            return jsonify({"error": "El mensaje debe tener contenido."}), 402
+
+        new_message = ContactMessage(
+            name=name,
+            email=email,
+            phone=phone,
+            message=message,
+            created_at=created_at
+        )
+
+        db.session.add(new_message)
+        db.session.commit()
+
+        return jsonify({"message": "Mensaje de contacto enviado exitosamente"}), 201
+
+    except Exception as e:
+        print(f"Error en /api/contact: {e}")  # Imprime el error completo
+        return jsonify({"error": "Error interno del servidor"}), 500
 
