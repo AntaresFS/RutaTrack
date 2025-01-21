@@ -101,9 +101,8 @@ export const Inicio = () => {
         setMessages({ ...messages, loginWarning: "" });
 
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/login`, signupData, {
+            const response = await axios.post(`${BACKEND_URL}/api/token`, signupData, {
                 headers: HEADERS,
-                withCredentials: true,
             });
 
             if (response.status === 200) {

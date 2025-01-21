@@ -25,7 +25,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 getActions().changeColor(0, "green");
             },
 
-            // Función para cargar los datos del usuario
+            // Función para cargar los datos del usuario REVISAR!!
             fetchUserData: async () => {
                 try {
                     const token = localStorage.getItem("token");
@@ -74,6 +74,18 @@ const getState = ({ getStore, getActions, setStore }) => {
                 } catch (err) {
                     console.error("Error verificando el token:", err);
                     return true;
+                }
+            },
+
+            // Función para cerrar sesión
+            logout: async () => {
+                try {
+                    const resp = await axios.post(`${process.env.BACKEND_URL}/api/logout`);
+                    if ('resp.ok') {
+                        throw new Error(`HTTP error! status: ${resp.status}`);
+                    }
+                } catch (error) {
+                    console.log("Error al intentar cerrar la sesión. Contacte con el Administrador.")
                 }
             },
 

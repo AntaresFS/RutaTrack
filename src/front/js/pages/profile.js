@@ -7,6 +7,9 @@ import { Loader } from '@googlemaps/js-api-loader';
 import '../../styles/Profile.css'; // Archivo CSS actualizado
 import { Context } from '../store/appContext';
 
+const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
+const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
+
 
 const Profile = () => {
     const [user, setUser] = useState(null);
@@ -23,19 +26,20 @@ const Profile = () => {
     // Función para obtener los datos del usuario autenticado
     const fetchUserData = async () => {
         try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`${process.env.BACKEND_URL}/api/user`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            setUser(response.data);
+            const response = await axios.get(`${BACKEND_URL}/api/users`, { headers: HEADERS });
+            setUser(response.data.user);  // Asume que user está en la respuesta
         } catch (err) {
             setError("No se pudieron cargar los datos del usuario.");
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchUserData();
+    }, []);  // Se ejecuta solo al montar el componente
+    
 
     const initializeMap = () => {
         const loader = new Loader({
@@ -56,11 +60,11 @@ const Profile = () => {
 
 
     const handleLogout = () => {
-        // Eliminar el token de autenticación de localStorage
-        localStorage.removeItem('authToken');
+        // Eliminar la cookie de autenticación
+        actions.logout
 
         // Redirigir a la página de inicio de sesión usando la variable global del .env
-        window.location.href = process.env.REACT_APP_BACKEND_URL;
+        useNavigate("/");
     };
 
     const searchLocation = async (location) => {
@@ -81,32 +85,6 @@ const Profile = () => {
         });
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Iniciar el estado de carga
-                setLoading(true);
-
-                // Llamar a la función de Flux para obtener los datos del usuario
-                await actions.fetchUserData();
-
-                // Actualizar el estado 'user' cuando los datos se obtienen
-                if (store.userData) {
-                    setUser(store.userData);
-                    console.log(store.userData)
-                }
-            } catch (error) {
-                // Manejar el error
-                console.error("Error al obtener los datos del usuario:", error);
-                setError(error);  // Opcionalmente, puedes usar setError para manejar los errores
-            } finally {
-                // Detener el estado de carga al finalizar
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, []); // El array vacío asegura que solo se ejecute una vez al montar el componente
 
     useEffect(() => {
         initializeMap();
@@ -117,6 +95,9 @@ const Profile = () => {
             searchLocation(user.location);
         }
     }, [user, map]);
+
+    if (loading) return <p>Cargando...</p>;
+    if (error) return <p>Error: {error}</p>;
 
     return (
         <div className="profile-page-container">

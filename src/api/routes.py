@@ -8,12 +8,12 @@ import datetime
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner
-from flask_jwt_extended import jwt_required, get_jwt, create_access_token
+from flask_jwt_extended import jwt_required, get_jwt, create_access_token, get_jwt_identity, unset_jwt_cookies
 import pytz
 
 # Habilita CORS para todas las rutas y orígenes
 api = Blueprint('api', __name__)
-CORS(api, supports_credentials=True)
+CORS(api, supports_credentials=True, origins="https://refactored-pancake-r4rgqqv755qx2x646-3000.app.github.dev")
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'tu_clave_secreta')  # Usar una variable de entorno para mayor seguridad  !!
 RESET_SECRET_KEY = os.getenv('RESET_SECRET_KEY', 'tu_clave_secreta_reset')
@@ -102,7 +102,7 @@ def create_user():
         db.session.add(new_user)
         db.session.commit()
 
-         # Crear un token JWT incluyendo el company_id
+        # Crear un token JWT incluyendo el company_id
         access_token = create_access_token(identity=new_user.id, additional_claims={"company_id": company.id})
 
         # Respuesta exitosa con el token
@@ -119,7 +119,7 @@ def create_user():
 
 
 # Endpoint para iniciar sesión
-@api.route('/api/login', methods=['POST'])
+@api.route('/api/token', methods=['POST'])
 def login_user():
     try:
         data = request.get_json()
@@ -142,32 +142,46 @@ def login_user():
         # Verifica la contraseña
         if not check_password_hash(user.password_hash, password):
             return jsonify({"error": "La contraseña ingresada es incorrecta."}), 401
+        
+        # Obtener datos de la compañía
+        company = Company.query.filter_by(id=user.company_id).first()
+        if not company:
+            return jsonify({"error": "La cuenta no está asociada a una compañía registrada."}), 403
 
         # Genera el token JWT
-        token = jwt.encode({
-            'user_id': user.id,
-            'company_id': user.company_id,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }, SECRET_KEY, algorithm='HS256')
+        access_token = create_access_token(identity=user.id)
 
+        # token = jwt.encode({
+        #     'user_id': user.id,
+        #     'company_id': user.company_id,
+        #     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+        # }, SECRET_KEY, algorithm='HS256')
+ 
         # Crea la respuesta con cookie HTTP-only
-        response = make_response(jsonify({
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'name': user.name,  
-                'company_id': user.company_id
+        response = jsonify({
+            "message": "Inicio de sesión exitoso.",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "name": user.name,
+                "location": user.location, 
+                "created_at": user.created_at,
+                "company": {
+                    "id": company.id,
+                    "name": company.name
+                }
             }
-        }))
+        })
+
         response.set_cookie(
             key='auth_token',
-            value=token,
+            value=access_token,
             httponly=True,  # La cookie no es accesible desde JavaScript
             secure=True,    # Requiere HTTPS
             samesite='Strict',  # Evita envío en solicitudes de otros sitios
             max_age=60*60  # Duración de 1 hora
         )
-        return response
+        return response, 200
 
     # Si falta una clave esperada en el JSON
     except Exception as e:
@@ -186,36 +200,33 @@ def login_user():
 
 
 # Obtener datos del usuario autenticado (con JWT)
-@api.route('/api/user', methods=['GET'])
+@api.route('/api/users', methods=['GET'])
+@jwt_required(locations=["auth_token"])
 def get_user_profile():
     try:
-        # Obtener el token JWT de la cabecera Authorization
-        auth_header = request.headers.get('Authorization')
-        if not auth_header or not auth_header.startswith('Bearer '):
-            return jsonify({"error": "Token de autorización faltante o inválido"}), 401
-        
-        token = auth_header.split(" ")[1]
-        
-        try:
-            # Decodificar el token JWT para obtener el ID del usuario
-            payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'])
-            user_id = payload['user_id']
-        except jwt.ExpiredSignatureError:
-            return jsonify({"error": "El token ha expirado"}), 401
-        except jwt.InvalidTokenError:
-            return jsonify({"error": "Token inválido"}), 401
+        user_id = get_jwt_identity()
 
-        # Consultar el usuario en la base de datos
+        # Manejo error token no encontrado
+        if not user_id:
+            return jsonify({"error": "Token no válido o no presente."}), 401
+
+        # Consultar el usuario
         user = User.query.get(user_id)
-        if user:
-            return jsonify(user.serialize()), 200
-        else:
-            return jsonify({"error": "Usuario no encontrado"}), 404
-
+        if not user:
+            return jsonify({"error": "Usuario no encontrado."}), 404
+        
+        # Consultar la compañía
+        company = Company.query.get(user.company_id)
+        return jsonify({
+            "user": user.serialize(),
+            "company": company.serialize() if company else None
+        }), 200
+    
     except Exception as e:
-        print(f"Error en /api/user: {e}")
-        return jsonify({"error": "Error interno del servidor"}), 500
-
+        api.logger.error(f"Error en /api/user: {e}")
+        return jsonify({"error": "Error interno del servidor."}), 500
+    
+    
 
 # Solicitar recuperación de contraseña
 @api.route('/api/forgot-password', methods=['POST'])
@@ -269,6 +280,12 @@ def reset_password(token):
         print(f"Error en /api/reset-password: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
       
+# Cerrar sesión
+@api.route('/logout', methods=['POST'])
+def logout():
+    response = jsonify({"message": "Cierre de sesión exitoso"})
+    unset_jwt_cookies(response)  # Elimina las cookies JWT
+    return response
 
 # COMPAÑÍAS
 
