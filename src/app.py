@@ -10,6 +10,7 @@ from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from itsdangerous import URLSafeTimedSerializer
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../public/')
@@ -30,10 +31,17 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'UnaClaveSecretaSuperSegura2024!!'
+app.config['MAIL_SERVER'] = 'localhost'  # Configuración provisional para pruebas
+app.config['MAIL_PORT'] = 1025
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USERNAME'] = None
+app.config['MAIL_PASSWORD'] = None
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['JWT_TOKEN_LOCATION'] = ['headers']
 
 jwt = JWTManager(app)
+
+ts = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY'])
 
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)

@@ -1,13 +1,13 @@
 import os
 from sqlite3 import IntegrityError
-from flask import Blueprint, abort, jsonify, request, current_app, make_response
+from flask import Blueprint, abort, jsonify, request, current_app, make_response, render_template
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
-import datetime
+from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner
+from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner, PasswordResetToken
 from flask_jwt_extended import jwt_required, get_jwt, create_access_token, get_jwt_identity, unset_jwt_cookies
 import pytz
 
@@ -199,6 +199,62 @@ def login_user():
         return jsonify({"error": "Error interno del servidor. Por favor, intenta nuevamente más tarde."}), 500
 
 
+# Ruta para solicitar recuperación de contraseña
+@api.route('/request-password-reset', methods=['POST'])
+def request_password_reset():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+
+    if not user:
+        return jsonify({"message": "Si el correo existe, se enviará un enlace de recuperación."}), 200
+
+    # Generar un token de recuperación
+    token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=15))
+
+    # Almacenar el token en la base de datos
+    reset_token = PasswordResetToken(
+        token=token,
+        user_id=user.id,
+        expires_at=datetime.utcnow() + timedelta(minutes=15)
+    )
+    db.session.add(reset_token)
+    db.session.commit()
+
+    # Enviar el correo con el enlace de recuperación (método provisional)
+    reset_url = f"http://localhost:5000/reset-password?token={token}"
+    print(f"[DEBUG] Enlace de recuperación: {reset_url}")
+
+    return jsonify({"message": "Correo de recuperación enviado (provisional). Revisa los logs para obtener el enlace."}), 200
+
+# Ruta para el formulario de restablecimiento
+@api.route('/reset-password', methods=['GET', 'POST'])
+def reset_password():
+    # Procesar la solicitud de restablecimiento
+    data = request.json
+    token = data.get('token')
+    new_password = data.get('password')
+    
+    if not token or not new_password:
+        return jsonify({"message": "Token y nueva contraseña son obligatorios."}), 400
+
+    reset_token = PasswordResetToken.query.filter_by(token=token).first()
+
+    if not reset_token or reset_token.expires_at < datetime.utcnow():
+        return jsonify({"message": "El enlace de recuperación es inválido o ha expirado."}), 400
+
+    user = User.query.get(reset_token.user_id)
+    if not user:
+        return jsonify({"message": "Usuario no encontrado."}), 404
+
+    # Actualizar la contraseña del usuario
+    user.password = generate_password_hash(new_password)
+
+    # Invalidar el token después de usarlo
+    db.session.delete(reset_token)
+    db.session.commit()
+
+    return jsonify({"message": "Contraseña restablecida con éxito."}), 200
+
 # Obtener datos del usuario autenticado (con JWT)
 @api.route('/api/users', methods=['GET'])
 @jwt_required(locations=["auth_token"])
@@ -226,59 +282,6 @@ def get_user_profile():
         api.logger.error(f"Error en /api/user: {e}")
         return jsonify({"error": "Error interno del servidor."}), 500
     
-    
-
-# Solicitar recuperación de contraseña
-@api.route('/api/forgot-password', methods=['POST'])
-def forgot_password():
-    try:
-        data = request.get_json()
-        email = data.get('email')
-
-        if not email:
-            return jsonify({"error": "Email es requerido"}), 400
-
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return jsonify({"error": "No se encontró el usuario con ese email"}), 404
-
-        token = serializer.dumps(email, salt='password-reset-salt')
-        reset_link = f'{os.getenv("BACKEND_URL")}/reset-password/{token}'
-
-        print (reset_link)
-
-    except Exception as e:
-        print(f"Error en /api/forgot-password: {e}")
-        return jsonify({"error": "Error interno del servidor"}), 500
-
-
-# Restablecer contraseña
-@api.route('/api/reset-password/<token>', methods=['POST'])
-def reset_password(token):
-    try:
-        data = request.get_json()
-        new_password = data.get('password')
-
-        if not new_password:
-            return jsonify({"error": "Contraseña es requerida"}), 400
-
-        try:
-            email = serializer.loads(token, salt='password-reset-salt', max_age=3600)
-        except SignatureExpired:
-            return jsonify({"error": "El enlace de recuperación ha expirado"}), 400
-
-        user = User.query.filter_by(email=email).first()
-        if not user:
-            return jsonify({"error": "No se encontró el usuario con ese email"}), 404
-
-        user.password_hash = generate_password_hash(new_password)
-        db.session.commit()
-
-        return jsonify({"message": "Contraseña restablecida exitosamente"}), 200
-
-    except Exception as e:
-        print(f"Error en /api/reset-password: {e}")
-        return jsonify({"error": "Error interno del servidor"}), 500
       
 # Cerrar sesión
 @api.route('/logout', methods=['POST'])

@@ -59,6 +59,18 @@ class User(db.Model):
         }
 
 
+# Modelo de Token de Recuperación
+class PasswordResetToken(db.Model):
+
+    # Nombre de la tabla en la base de datos
+    __tablename__ = 'passwordResetTokens'
+
+    # Contenido de la tabla
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(200), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
 class Company(db.Model):
 
     # Nombre de la tabla en la base de datos
