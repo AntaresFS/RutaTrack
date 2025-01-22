@@ -247,7 +247,7 @@ def reset_password():
         return jsonify({"message": "Usuario no encontrado."}), 404
 
     # Actualizar la contraseña del usuario
-    user.password = generate_password_hash(new_password)
+    user.password_hash = generate_password_hash(new_password)
 
     # Invalidar el token después de usarlo
     db.session.delete(reset_token)
