@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/home.css";
 import { Modal } from "../component/modal";
+import { Context } from '../store/appContext'
 
 
 const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
 const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
 export const Inicio = () => {
+    const { store, actions } = useContext(Context);
+
     const [signupData, setSignUpData] = useState({
         email: "",
         password: ""
@@ -105,11 +108,17 @@ export const Inicio = () => {
                 headers: HEADERS,
             });
 
-            if (response.status === 200) {
-                const { user } = response.data;
-                localStorage.setItem("user", JSON.stringify(user));
+            const token = response.data.token;
+
+            if (token) {
+                localStorage.setItem('accessToken', token); // Almacenar el token en el localStorage
+                localStorage.setItem("user", JSON.stringify(response.data.user)); // Almacena los datos de ususario en el localStorage
+                actions.setUser(response.data.user);  // Guarda los datos del usuario en el store
+                console.log("Usuario almacenado:", response.data.user); // Muestra los datos del usuario obtenidos en la respuesta
+                console.log("Redirigiendo al perfil...");
                 navigate("/profile");
             }
+
         } catch (error) {
             // Manejo de errores específico
             let errorMsg = "Error al iniciar sesión. Por favor, inténtalo más tarde."; // Mensaje genérico por defecto

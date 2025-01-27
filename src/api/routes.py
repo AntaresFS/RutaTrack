@@ -151,30 +151,18 @@ def login_user():
         access_token = create_access_token(identity=user.id)
  
         # Crea la respuesta con cookie HTTP-only
-        response = jsonify({
+        return jsonify({
             "message": "Inicio de sesión exitoso.",
+            "token": access_token,
             "user": {
-                "id": user.id,
+                "name": user.name, 
+                "last_name": user.last_name,
                 "email": user.email,
-                "name": user.name,
+                "company": company.name,
                 "location": user.location, 
-                "created_at": user.created_at,
-                "company": {
-                    "id": company.id,
-                    "name": company.name
-                }
+                "created_at": user.created_at
             }
-        })
-
-        response.set_cookie(
-            key='access_token_cookie',
-            value=access_token,
-            httponly=True,  # La cookie no es accesible desde JavaScript
-            secure=True,    # Requiere HTTPS
-            samesite='Strict',  # Evita envío en solicitudes de otros sitios
-            max_age=60*60  # Duración de 1 hora
-        )
-        return response, 200
+        }), 200
 
     # Si falta una clave esperada en el JSON
     except Exception as e:
@@ -249,49 +237,27 @@ def reset_password():
     return jsonify({"message": "Contraseña restablecida con éxito."}), 200
 
 # Obtener datos del usuario autenticado (con JWT)
-@api.route('/api/users', methods=['GET'])
+@api.route('/api/users/me', methods=['GET'])
 @jwt_required(locations=["cookies"])
-def get_user_profile():
-    print("Cookies recibidas:", request.cookies)  # Verifica si la cookie está presente
-    try:
-        # Obtener el token JWT desde la cookie
-        access_token = request.cookies.get('access_token_cookie')
-        if not access_token:
-            return jsonify({"error": "Token no proporcionado en la cookie."}), 401
-
-        # Obtener la identidad del JWT
-        current_user = get_jwt_identity()
-        print("ID del usuario:", current_user)
-
-        # Manejo error token no encontrado
-        if not current_user:
-            return jsonify({"error": "Token no válido o no presente."}), 401
-
-        # Consultar el usuario
-        user = User.query.filter_by(id=current_user).first()
-        if not user:
-            return jsonify({"error": "Usuario no encontrado."}), 404
-        
-        # Consultar la compañía
-        company = Company.query.filter_by(id=user.company_id).first()
-        if not company:
-            return jsonify({"error": "La cuenta no está asociada a una compañía registrada."}), 403
-        
-        # Responder con los datos del usuario
-        return jsonify({
-            "user": {
-                "name": user.name,
-                "last_name": user.last_name,
-                "email": user.email,
-                "company": company.name,
-                "location": user.location,
-                "created_at": user.created_at                
-            }
-        }), 200
+def get_current_user():
+    user_id = get_jwt_identity()
+    user = User.query.get(user_id)
     
-    except Exception as e:
-        api.logger.error(f"Error en /api/user: {e}")
-        return jsonify({"error": "Error interno del servidor."}), 500
+    if not user:
+        return jsonify({"error": "Usuario no encontrado."}), 404
+    
+    # Acceder a la compaía del usuario
+    company = user.company  # Accede al objeto relacionado 'Company' gracias a db.Relationship
+    
+    # Devolver los datos del usuario junto con el nombre de la compañía
+    return jsonify({
+        "name": user.name,
+        "last_name": user.last_name,
+        "email": user.email,
+        "location": user.location,
+        "company": company.name,
+        "created_at": user.created_at           
+    })
     
       
 # Cerrar sesión
