@@ -18,7 +18,7 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 app = Flask(__name__)
 
 # Configura CORS para permitir solicitudes desde los frontends especificados
-CORS(app)
+CORS(app, supports_credentials=True)
 
 
 app.url_map.strict_slashes = False
@@ -37,7 +37,7 @@ app.config['MAIL_USE_TLS'] = False
 app.config['MAIL_USERNAME'] = None
 app.config['MAIL_PASSWORD'] = None
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
-app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 
 jwt = JWTManager(app)
 

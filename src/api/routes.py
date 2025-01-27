@@ -8,12 +8,12 @@ from datetime import datetime, timedelta
 from flask_mail import Mail, Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired
 from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner, PasswordResetToken
-from flask_jwt_extended import jwt_required, get_jwt, create_access_token, get_jwt_identity, unset_jwt_cookies
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, unset_jwt_cookies
 import pytz
 
 # Habilita CORS para todas las rutas y orígenes
 api = Blueprint('api', __name__)
-CORS(api, supports_credentials=True, origins="https://refactored-pancake-r4rgqqv755qx2x646-3000.app.github.dev")
+CORS(api, supports_credentials=True)
 
 SECRET_KEY = os.getenv('SECRET_KEY', 'tu_clave_secreta')  # Usar una variable de entorno para mayor seguridad  !!
 RESET_SECRET_KEY = os.getenv('RESET_SECRET_KEY', 'tu_clave_secreta_reset')
@@ -35,15 +35,14 @@ def handle_hello():
 # USUARIOS + REGISTER/LOGIN
 
 # Obtener todos los usuarios
-@api.route('/api/usuarios', methods=['GET'])
-@jwt_required
+@api.route('/api/users', methods=['GET'])
 def get_all_users():
 
     try:
         users = User.query.all()
         return jsonify([user.serialize() for user in users]), 200
     except Exception as e:
-        print(f"Error en /api/usuarios: {e}")
+        print(f"Error en /api/users: {e}")
         return jsonify({"error": "Error interno del servidor"}), 500
 
 
@@ -150,12 +149,6 @@ def login_user():
 
         # Genera el token JWT
         access_token = create_access_token(identity=user.id)
-
-        # token = jwt.encode({
-        #     'user_id': user.id,
-        #     'company_id': user.company_id,
-        #     'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        # }, SECRET_KEY, algorithm='HS256')
  
         # Crea la respuesta con cookie HTTP-only
         response = jsonify({
@@ -174,7 +167,7 @@ def login_user():
         })
 
         response.set_cookie(
-            key='auth_token',
+            key='access_token_cookie',
             value=access_token,
             httponly=True,  # La cookie no es accesible desde JavaScript
             secure=True,    # Requiere HTTPS
@@ -257,25 +250,43 @@ def reset_password():
 
 # Obtener datos del usuario autenticado (con JWT)
 @api.route('/api/users', methods=['GET'])
-@jwt_required(locations=["auth_token"])
+@jwt_required(locations=["cookies"])
 def get_user_profile():
+    print("Cookies recibidas:", request.cookies)  # Verifica si la cookie está presente
     try:
-        user_id = get_jwt_identity()
+        # Obtener el token JWT desde la cookie
+        access_token = request.cookies.get('access_token_cookie')
+        if not access_token:
+            return jsonify({"error": "Token no proporcionado en la cookie."}), 401
+
+        # Obtener la identidad del JWT
+        current_user = get_jwt_identity()
+        print("ID del usuario:", current_user)
 
         # Manejo error token no encontrado
-        if not user_id:
+        if not current_user:
             return jsonify({"error": "Token no válido o no presente."}), 401
 
         # Consultar el usuario
-        user = User.query.get(user_id)
+        user = User.query.filter_by(id=current_user).first()
         if not user:
             return jsonify({"error": "Usuario no encontrado."}), 404
         
         # Consultar la compañía
-        company = Company.query.get(user.company_id)
+        company = Company.query.filter_by(id=user.company_id).first()
+        if not company:
+            return jsonify({"error": "La cuenta no está asociada a una compañía registrada."}), 403
+        
+        # Responder con los datos del usuario
         return jsonify({
-            "user": user.serialize(),
-            "company": company.serialize() if company else None
+            "user": {
+                "name": user.name,
+                "last_name": user.last_name,
+                "email": user.email,
+                "company": company.name,
+                "location": user.location,
+                "created_at": user.created_at                
+            }
         }), 200
     
     except Exception as e:

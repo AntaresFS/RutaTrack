@@ -26,7 +26,7 @@ const Profile = () => {
     // Función para obtener los datos del usuario autenticado
     const fetchUserData = async () => {
         try {
-            const response = await axios.get(`${BACKEND_URL}/api/users`, { headers: HEADERS });
+            const response = await axios.get(`${BACKEND_URL}/api/users`, { withCredentials: true });
             setUser(response.data.user);  // Asume que user está en la respuesta
         } catch (err) {
             setError("No se pudieron cargar los datos del usuario.");
@@ -39,7 +39,7 @@ const Profile = () => {
     useEffect(() => {
         fetchUserData();
     }, []);  // Se ejecuta solo al montar el componente
-    
+
 
     const initializeMap = () => {
         const loader = new Loader({
