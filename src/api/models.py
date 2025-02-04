@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.schema import UniqueConstraint
+from sqlalchemy.sql import func
 from flask_jwt_extended import JWTManager
 from pytz import timezone
 import pytz
@@ -18,25 +19,82 @@ from datetime import datetime
 
 db = SQLAlchemy()
 
+class User(db.Model):
+    # Nombre de la tabla en la base de datos
+    __tablename__ = 'users'
+
+    # Contenido de la tabla en la base de datos
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    location = db.Column(db.String(150), nullable=True)
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)  
+
+    # Relación uno a muchos con Company
+    company = db.relationship('Company', backref='users', lazy='select')
+
+    # Inicializar instancia de users
+    def __init__(self, email, password_hash, name, last_name, company_id, location=None, created_at=None):
+        self.email = email
+        self.password_hash = password_hash
+        self.name = name
+        self.last_name = last_name
+        self.company_id = company_id
+        self.location = location
+        self.created_at = created_at
+
+    # Serializar la info de User para convertirla en un diccionario de Python
+    def serialize(self):
+        return {
+            'id': self.id,
+            'email': self.email,
+            'name': self.name,
+            'last_name': self.last_name,
+            'company_id' : self.company_id,
+            'location': self.location,
+            'created_at': self.created_at.isoformat()  # Convertir a formato ISO
+        }
+
+
+# Modelo de Token de Recuperación
+class PasswordResetToken(db.Model):
+
+    # Nombre de la tabla en la base de datos
+    __tablename__ = 'passwordResetTokens'
+
+    # Contenido de la tabla
+    id = db.Column(db.Integer, primary_key=True)
+    token = db.Column(db.String(500), nullable=False, unique=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+
 class Company(db.Model):
+
+    # Nombre de la tabla en la base de datos
     __tablename__ = 'companies'
 
+    # Contenido de la tabla en la base de datos
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), unique=True, nullable=False)
     nif = db.Column(db.String(9), unique=True, nullable=True)
     address = db.Column(db.String(120), unique=False, nullable=True)
     phone = db.Column(db.String(24), unique=False, nullable=True)
     email = db.Column(db.String(34), unique=False, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc)) 
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False) # Valor por defecto asignado por la BD
 
+    # Inicializar instancia de users
     def __init__(self, name, nif=None, address=None, phone=None, email=None, created_at=None):
         self.name = name
         self.nif = nif
         self.address = address
         self.phone = phone
         self.email = email
-        self.created_at = created_at
+        self.created_at = created_at or func.now()
 
+    # Serializar la info de User para convertirla en un diccionario de Python 
     def serialize(self):
         return {
             'id' : self.id,
@@ -45,7 +103,7 @@ class Company(db.Model):
             'address' : self.address,
             'phone' : self.phone,
             'email' : self.email, 
-            'created_at' : self.created_at,
+            'created_at' : self.created_at.isoformat(),  # Convierte este valor en formato ISO
 
             # Elementos de otras clases relacionados
             'users' : [user.serialize() for user in self.users],
@@ -83,43 +141,6 @@ class Company(db.Model):
             if existing_nif:
                 raise ValueError("El NIF ya está registrado.")
 
-class User(db.Model):
-    __tablename__ = 'users'
-
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    name = db.Column(db.String(100), nullable=True)
-    last_name = db.Column(db.String(100), nullable=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    location = db.Column(db.String(150), nullable=True)
-    timezone = db.Column(db.String(64), nullable=True, default="UTC")
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-
-    # Relación uno a muchos con Company
-    company = db.relationship('Company', backref='users', lazy='select')
-
-    def __init__(self, email, password_hash, name=None, last_name=None, company_id=None, location=None, timezone=None, created_at=None):
-        self.email = email
-        self.password_hash = password_hash
-        self.name = name
-        self.last_name = last_name
-        self.company_id = company_id
-        self.location = location
-        self.timezone = timezone
-        self.created_at = created_at
-
-    def serialize(self):
-        return {
-            'id': self.id,
-            'email': self.email,
-            'name': self.name,
-            'last_name': self.last_name,
-            'company_id' : self.company_id,
-            'location': self.location,
-            'timezone' : self.timezone, 
-            'created_at': self.created_at.isoformat()  # Convertir a formato ISO
-        }
 
 
 class Address(db.Model):
@@ -131,18 +152,20 @@ class Address(db.Model):
     category = db.Column(db.String(50), nullable=False)
     contact = db.Column(db.String(100), nullable=True)
     comments = db.Column(db.Text, nullable=True)
-    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
+    company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='addresses', lazy='select')
 
-    def __init__(self, name, address, category, contact=None, comments=None, company_id=None):
+    def __init__(self, name, address, category, contact=None, comments=None, company_id=None, created_at=None):
         self.name = name
         self.address = address
         self.category = category
         self.contact = contact
         self.comments = comments
         self.company_id = company_id
+        self.created_at = created_at
 
     def serialize(self):
         return {
@@ -164,7 +187,7 @@ class ContactMessage(db.Model):
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(db.String(20))
     message = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     def __init__(self, name, email, message, phone=None, created_at=None):
         self.name = name
@@ -195,7 +218,7 @@ class Client(db.Model):
     email = db.Column(db.String(120), nullable=True)
     address = db.Column(db.String(120), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     # Restricción única compuesta: (user_id, nif)
     # Un mismo usuario sólo puede dar de alta un mismo NIF como cliente
@@ -211,7 +234,6 @@ class Client(db.Model):
         self.phone = phone
         self.email = email
         self.address = address
-        self.company = company
         self.company_id = company_id
         self.created_at = created_at
 
@@ -224,7 +246,6 @@ class Client(db.Model):
             'phone': self.phone,
             'email': self.email,
             'address' : self.address,
-            'company' : self.company, 
             'company_id' : self.company_id,
             'created_at' : self.created_at.isoformat()  # Convertir a formato ISO  
         }
@@ -243,7 +264,7 @@ class Vehicle(db.Model):
     fuel = db.Column(db.String(50), nullable=True)
     emissions = db.Column(db.String(50), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
     
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='vehicles', lazy='select')
@@ -290,7 +311,7 @@ class Partner(db.Model):
     include_tolls = db.Column(db.Boolean, default=False)
     company = db.Column(db.String(100), nullable=True)
     company_id = db.Column(db.Integer, db.ForeignKey('companies.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = db.Column(db.DateTime, default=func.now(), nullable=False)
 
     # Relación 1 a n con Company
     company = db.relationship('Company', backref='partners', lazy='select')

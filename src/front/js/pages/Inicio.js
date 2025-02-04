@@ -1,13 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../../styles/home.css";
 import { Modal } from "../component/modal";
+import { Context } from '../store/appContext'
+
 
 const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
 const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
 export const Inicio = () => {
+    const { store, actions } = useContext(Context);
+
     const [signupData, setSignUpData] = useState({
         email: "",
         password: ""
@@ -15,8 +19,8 @@ export const Inicio = () => {
 
     const [registerData, setRegisterData] = useState({
         name: "",
-        lastName: "",
-        company: "",
+        last_name: "",
+        company_name: "",
         location: "",
         email: "",
         password: "",
@@ -44,14 +48,14 @@ export const Inicio = () => {
     // Función para redirigir a otra página
     const navigate = useNavigate();
 
-    // Función para reuniciar los valores de los formularios
+    // Función para reiniciar los valores de los formularios
     const resetFormData = () => {
         setSignUpData({ email: "", password: "" });
         setRegisterData({
             name: "",
-            lastName: "",
-            company: "",
-            locations: "",
+            last_name: "",
+            company_name: "",
+            location: "",
             email: "",
             password: "",
             confirmPassword: ""
@@ -100,18 +104,40 @@ export const Inicio = () => {
         setMessages({ ...messages, loginWarning: "" });
 
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/login`, signupData, { headers: HEADERS, withCredentials: true });
+            const response = await axios.post(`${BACKEND_URL}/api/token`, signupData, {
+                headers: HEADERS,
+            });
 
-            if (response.status === 200) {
-                const { user } = response.data;
-                localStorage.setItem("user", JSON.stringify(user));
+            const token = response.data.token;
+
+            if (token) {
+                localStorage.setItem('accessToken', token); // Almacenar el token en el localStorage
+                localStorage.setItem("user", JSON.stringify(response.data.user)); // Almacena los datos de ususario en el localStorage
+                actions.setUser(response.data.user);  // Guarda los datos del usuario en el store
+                console.log("Usuario almacenado:", response.data.user); // Muestra los datos del usuario obtenidos en la respuesta
+                console.log("Redirigiendo al perfil...");
                 navigate("/profile");
             }
+
         } catch (error) {
             // Manejo de errores específico
-            const errorMsg = error.response?.status === 401
-                ? "Credenciales incorrectas. Intenta nuevamente."
-                : "Error al iniciar sesión. Por favor, inténtalo más tarde.";
+            let errorMsg = "Error al iniciar sesión. Por favor, inténtalo más tarde."; // Mensaje genérico por defecto
+
+            if (error.response) {
+                // Análisis del código de estado HTTP
+                switch (error.response.status) {
+                    case 404:
+                        errorMsg = "El usuario no existe. Por favor, verifica tus credenciales.";
+                        break;
+                    case 401:
+                        errorMsg = "La contraseña introducida no es correcta.";
+                        break;
+                    default:
+                        errorMsg = "Error al iniciar sesión. Por favor, inténtalo más tarde.";
+                        break;
+                }
+            }
+
             setMessages({ ...messages, loginWarning: errorMsg });
         }
     };
@@ -282,27 +308,27 @@ export const Inicio = () => {
                                         />
                                     </div>
                                     <div className="form-input fw-bold text-start mb-3">
-                                        <label className="p-2" htmlFor="lastName">Apellido</label>
+                                        <label className="p-2" htmlFor="last_name">Apellido</label>
                                         <input
                                             type="text"
                                             className="form-control"
-                                            id="lastName"
-                                            name="lastName"
+                                            id="last_name"
+                                            name="last_name"
                                             placeholder="Apellido"
-                                            value={registerData.lastName}
+                                            value={registerData.last_name}
                                             onChange={handleRegisterChange}
                                             required
                                         />
                                     </div>
                                     <div className="form-input fw-bold text-start mb-3">
-                                        <label className="p-2" htmlFor="company">Empresa</label>
+                                        <label className="p-2" htmlFor="company_name">Empresa</label>
                                         <input
                                             type="text"
                                             className="form-control"
-                                            id="company"
-                                            name="company"
+                                            id="company_name"
+                                            name="company_name"
                                             placeholder="Empresa"
-                                            value={registerData.company}
+                                            value={registerData.company_name}
                                             onChange={handleRegisterChange}
                                             required
                                         />

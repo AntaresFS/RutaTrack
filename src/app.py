@@ -5,11 +5,12 @@ from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
 from api.models import db, User
-from api.routes import api, direcciones_bp, socios_bp
+from api.routes import api, addresses_bp, partners_bp, companies_bp
 from api.admin import setup_admin
 from api.commands import setup_commands
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from itsdangerous import URLSafeTimedSerializer
 
 ENV = "development" if os.getenv("FLASK_DEBUG") == "1" else "production"
 static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../public/')
@@ -17,7 +18,7 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 app = Flask(__name__)
 
 # Configura CORS para permitir solicitudes desde los frontends especificados
-CORS(app)
+CORS(app, supports_credentials=True)
 
 
 app.url_map.strict_slashes = False
@@ -30,20 +31,26 @@ else:
     app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:////tmp/test.db"
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['JWT_SECRET_KEY'] = 'UnaClaveSecretaSuperSegura2024!!'
-app.config['JWT_TOKEN_LOCATION'] = ['headers']
+app.config['MAIL_SERVER'] = 'localhost'  # Configuración provisional para pruebas
+app.config['MAIL_PORT'] = 1025
+app.config['MAIL_USE_TLS'] = False
+app.config['MAIL_USERNAME'] = None
+app.config['MAIL_PASSWORD'] = None
+app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
+app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 
 jwt = JWTManager(app)
+
+ts = URLSafeTimedSerializer(app.config['JWT_SECRET_KEY'])
 
 MIGRATE = Migrate(app, db, compare_type=True)
 db.init_app(app)
 
-# Añade el blueprint de la API
+# Registrar los Blueprints de los endpoints
 app.register_blueprint(api)
-# Registra el blueprint de direcciones
-app.register_blueprint(direcciones_bp)
-# Registrar el Blueprint de socios
-app.register_blueprint(socios_bp)
+app.register_blueprint(addresses_bp)
+app.register_blueprint(partners_bp)
+app.register_blueprint(companies_bp)
 
 
 # Handle/serialize errors like a JSON object
