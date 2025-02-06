@@ -49,17 +49,20 @@ html, body {
 }
 
 .profile-section {
-    position: relative; /* Necesario para el pseudo-elemento */
-    flex: 0 0 45%; /* Usuario ocupa el 50% del ancho */
-    padding: 30px;
-    
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: url('https://images.unsplash.com/photo-1532201633958-497feb474315?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D') no-repeat center center;
-    background-size: cover; /* Asegura que la imagen cubra todo el fondo */
+  position: relative; /* Necesario para el pseudo-elemento */
+  flex: 30%; /* Ocupa un 30% del ancho */
+  padding: 20px;
+  width: auto;
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: url("https://images.unsplash.com/photo-1532201633958-497feb474315?q=80&w=1974&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D")
+    no-repeat center center;
+  background-size: cover; /* Asegura que la imagen cubra todo el fondo */
 }
 
 .profile-section::before {
@@ -151,26 +154,18 @@ html, body {
 }
 
 .profile-map-section {
-    flex: 0 0 37%; /* Mapa ocupa el 35% del ancho */
-    height: 100%; /* Ajustar la altura para ocupar el espacio restante */
+  flex: 50%; /* Ocupa la mitad del ancho disponible */
+  display: flex;
+  width: 80%;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  height: 100%; /* Ajustar la altura para ocupar el espacio restante */
 }
 
 .map-container {
-    width: 100%;
-    height: 100%; /* Ocupa el 100% del alto del contenedor */
-    border-style:solid;
-}
-
-.logout-button {
-    background-color: #ffc107; /* Cambia el color de fondo */
-    color: white; /* Color del texto */
-    border: none; /* Sin borde */
-    padding: 10px 15px; /* Espaciado */
-    border-radius: 5px; /* Bordes redondeados */
-    cursor: pointer; /* Cursor de puntero */
-    transition: background-color 0.3s; /* Transición suave */
-}
-
-.logout-button:hover {
-    background-color:#ff9900; /* Color al pasar el mouse */
+  width: 100%;
+  height: 100%; /* Ocupa el 100% del alto del contenedor */
+  min-height: 500px;
+  border-style: solid;
 }

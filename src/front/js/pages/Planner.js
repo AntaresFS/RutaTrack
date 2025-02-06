@@ -13,25 +13,48 @@ const Mapa = () => {
     const [routeInfo, setRouteInfo] = useState(null);
     const navigate = useNavigate();
 
+    // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
     useEffect(() => {
-        const loader = new Loader({
-            apiKey: apiOptions.apiKey,
-            version: "weekly",
-            libraries: ["places"]
-        });
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
-        loader.load().then(() => {
-            const mapInstance = new window.google.maps.Map(mapRef.current, {
-                center: { lat: 40.416775, lng: -3.703790 },
-                zoom: 6,
+    // Cargar usuario desde el localStorage si no está en el store
+    useEffect(() => {
+        if (!store.user) {
+            actions.getUserFromLocalStorage();
+        }
+    }, []); // Solo se ejecuta una vez al montar el componente
+
+    // Inicializar el mapa
+    useEffect(() => {
+        const initializeMap = () => {
+            if (!mapRef.current) {
+                console.error("mapRef no está disponible aún. Verifica que el contenedor del mapa tenga un tamaño válido.");
+                return;
+            }
+
+            const loader = new Loader({
+                apiKey: apiOptions.apiKey,
+                version: "weekly",
+                libraries: ["places"]
             });
 
-            const directionsRendererInstance = new window.google.maps.DirectionsRenderer();
-            directionsRendererInstance.setMap(mapInstance);
-
-            setMap(mapInstance);
-            setDirectionsRenderer(directionsRendererInstance);
-        });
+            loader.load().then(() => {
+                const mapInstance = new window.google.maps.Map(mapRef.current, {
+                    center: { lat: 40.416775, lng: -3.703790 },
+                    zoom: 6,
+                });
+                setMap(mapInstance);
+            })
+                .catch((e) => {
+                    console.error("Error al cargar el mapa:", e);
+                });
+        };
+        initializeMap();
     }, []);
 
     const handleRouteCalculated = (result) => {

@@ -18,6 +18,19 @@ const Profile = () => {
     const [map, setMap] = useState(null);
     const mapRef = useRef(null);
 
+    // Mostrar el tamaño de la pantalla en la consola
+    console.log(isMobile)
+
+    // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+
     // Cargar usuario desde el localStorage si  o está en el store
     useEffect(() => {
         console.log("Ejecutando useEffect en Profile.js. Store.user:", store.user); // Agrega este log
@@ -39,24 +52,26 @@ const Profile = () => {
             }
 
             const loader = new Loader({
-                apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+                apiKey: apiOptions.apiKey,
                 version: "weekly",
+                librarys: ["places"],
             });
 
             loader
                 .load()
                 .then(() => {
-                    const newMap = new window.google.maps.Map(mapRef.current, {
+              
+                    const mapInstance = new window.google.maps.Map(mapRef.current, {
                         center: { lat: -34.397, lng: 150.644 },
-                        zoom: 8,
+                        zoom: 6,
                     });
-                    setMap(newMap);
+                    setMap(mapInstance);
+
                 })
                 .catch((e) => {
                     console.error("Error al cargar la API de Google Maps:", e);
                 });
         };
-
         initializeMap();
     }, []);
 
@@ -83,11 +98,6 @@ const Profile = () => {
         }
     }, [store.user, map]);
 
-    // Manejar el logout
-    const handleLogout = () => {
-        actions.logout;  // Eliminar la cookie de autenticación
-        navigate("/");  // Redirigir a la página de inicio de sesión 
-    };
 
     if (!store.user) {
         return <p>Cargando...</p>;
