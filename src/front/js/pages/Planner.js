@@ -1,36 +1,17 @@
-import React, { useEffect, useRef, useState, useContext } from 'react';
-import { Context } from '../store/appContext';
+import React, { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
 import CalculateDistance from '../component/calculateDistance';
-import MobileControlPanel from "../component/DesktopControlPanel";
-import DesktopControlPanel from "../component/DesktopControlPanel";
+
+import ControlPanel from '../component/panelControl';
 import { useNavigate } from 'react-router-dom'; // Importa useNavigate
 
 const Mapa = () => {
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const apiOptions = { apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY };
     const mapRef = useRef(null);
     const [map, setMap] = useState(null);
     const [directionsRenderer, setDirectionsRenderer] = useState(null);
     const [routeInfo, setRouteInfo] = useState(null);
-    const { store, actions } = useContext(Context);
     const navigate = useNavigate();
-
-    // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    // Cargar usuario desde el localStorage si no está en el store
-    useEffect(() => {
-        if (!store.user) {
-            actions.getUserFromLocalStorage();
-        }
-    }, []); // Solo se ejecuta una vez al montar el componente
 
     useEffect(() => {
         const loader = new Loader({
@@ -84,10 +65,7 @@ const Mapa = () => {
 
     return (
         <div className="min-vh-100 d-flex">
-
-            {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
-            {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
-
+            <ControlPanel />
             <div className="container-fluid">
                 <div className="row g-4">
                     <div className="col-lg-4">

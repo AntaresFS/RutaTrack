@@ -1,76 +1,19 @@
-/* Control Panel */
-.profile-control-panel {
-  flex: 20%; /* Control Panel ocupa el 15% del ancho */
-  background-color: #f9f9f9;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  overflow-y: auto; /* Desplazamiento vertical si es necesario */
+#mi-perfil-button {
+    background-color: #f04c4c; /* Cambia el color de fondo */
+    color: white; /* Color del texto */
+    border: none; /* Sin borde */
+    padding: 10px 15px; /* Espaciado */
+    border-radius: 5px; /* Bordes redondeados */
+    cursor: pointer; /* Cursor de puntero */
+    transition: background-color 0.3s; /* Transición suave */
+    display: flex; /* Usar flexbox para centrar contenido */
+    align-items: center; /* Centrar verticalmente */
+    justify-content: center; /* Centrar horizontalmente */
+    height: 40px;
+    width: 143px;
+    margin-bottom: 15px;
 }
 
-.profile-control-panel h1 {
-  font-size: 1.8rem;
-  color: #ffc107;
-  margin-bottom: 20px;
-}
-
-.profile-control-panel ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-.profile-control-panel li {
-  margin-bottom: 20px;
-}
-
-.profile-control-panel a {
-  text-decoration: none;
-  color: #333;
-  font-size: 1.3rem;
-  display: flex;
-  align-items: center;
-}
-
-.profile-control-panel a:hover {
-  color: #007bff;
-}
-
-.profile-control-panel a svg {
-  margin-right: 12px;
-}
-
-/* Profile */
-.my-profile-button {
-  background-color: #f04c4c; /* Cambia el color de fondo */
-  color: white; /* Color del texto */
-  border: none; /* Sin borde */
-  padding: 10px 15px; /* Espaciado */
-  border-radius: 5px; /* Bordes redondeados */
-  cursor: pointer; /* Cursor de puntero */
-  transition: background-color 0.3s; /* Transición suave */
-  display: flex; /* Usar flexbox para centrar contenido */
-  align-items: center; /* Centrar verticalmente */
-  justify-content: center; /* Centrar horizontalmente */
-  height: 40px;
-  width: 143px;
-  margin-bottom: 15px;
-}
-
-.my-profile-button:hover {
-  background-color: #ff0000; /* Color al pasar el mouse */
-}
-
-/* Logout Button */
-.logout-button {
-  background-color: #ffc107; /* Cambia el color de fondo */
-  color: white; /* Color del texto */
-  border: none; /* Sin borde */
-  padding: 10px 15px; /* Espaciado */
-  border-radius: 5px; /* Bordes redondeados */
-  cursor: pointer; /* Cursor de puntero */
-  transition: background-color 0.3s; /* Transición suave */
-}
-
-.logout-button:hover {
-  background-color: #ff9900; /* Color al pasar el mouse */
+#mi-perfil-button:hover {
+    background-color: #ff0000; /* Color al pasar el mouse */
 }
