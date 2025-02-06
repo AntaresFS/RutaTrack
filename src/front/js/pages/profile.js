@@ -1,20 +1,14 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@googlemaps/js-api-loader';
 import '../../styles/Profile.css'; // Archivo CSS actualizado
 import { Context } from '../store/appContext';
 import ControlPanel from "../component/panelControl";
 
-const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
-const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
 
 const Profile = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const { store, actions } = useContext(Context);
-    const navigate = useNavigate();
     const [map, setMap] = useState(null);
     const mapRef = useRef(null);
 
@@ -60,7 +54,7 @@ const Profile = () => {
             loader
                 .load()
                 .then(() => {
-              
+
                     const mapInstance = new window.google.maps.Map(mapRef.current, {
                         center: { lat: -34.397, lng: 150.644 },
                         zoom: 6,
