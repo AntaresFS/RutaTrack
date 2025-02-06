@@ -1,6 +1,6 @@
 /* Control Panel */
 .profile-control-panel {
-  flex: 20%; /* Control Panel ocupa el 15% del ancho */
+  flex: 20%; /* Control Panel ocupa el 20% del ancho */
   background-color: #f9f9f9;
   padding: 20px;
   border-radius: 10px;

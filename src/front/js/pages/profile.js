@@ -26,13 +26,17 @@ const Profile = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Cargar usuario desde el localStorage si no está en el store
+    // Cargar usuario desde el localStorage si  o está en el store
     useEffect(() => {
+        console.log("Ejecutando useEffect en Profile.js. Store.user:", store.user); // Agrega este log
         if (!store.user) {
-            actions.getUserFromLocalStorage(); // Obtener datos solo si no están en el store
+            // Si no hay usuario en el estado, intenta cargarlo del localStorage
+            actions.getUserFromLocalStorage();
+        } else {
+            // Imprime el usuario una vez que esté disponible
+            console.log("Datos del usuario cargados desde el store:", store.user);
         }
-    }, []); // Solo se ejecuta una vez al montar el componente
-
+    }, [store.user, actions]); // Se ejecuta cada vez que el store.user cambia
 
     // Inicializar el mapa
     useEffect(() => {
@@ -43,24 +47,24 @@ const Profile = () => {
             }
 
             const loader = new Loader({
-                apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+                apiKey: apiOptions.apiKey,
                 version: "weekly",
+                librarys: ["places"],
             });
 
             loader
                 .load()
                 .then(() => {
-                    const newMap = new window.google.maps.Map(mapRef.current, {
+                    const mapInstance = new window.google.maps.Map(mapRef.current, {
                         center: { lat: -34.397, lng: 150.644 },
-                        zoom: 8,
+                        zoom: 6,
                     });
-                    setMap(newMap);
+                    setMap(mapInstance);
                 })
                 .catch((e) => {
                     console.error("Error al cargar la API de Google Maps:", e);
                 });
         };
-
         initializeMap();
     }, []);
 
@@ -86,6 +90,7 @@ const Profile = () => {
             searchLocation(store.user.location);
         }
     }, [store.user, map]);
+
 
     // Mostrar un mensaje de carga si no hay datos del usuario
     if (!store.user) {
