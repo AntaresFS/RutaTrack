@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "../../styles/home.css";
 import { Modal } from "../component/modal";
 import { Context } from '../store/appContext'
+import "../../styles/home.css";
+
 
 
 const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
 const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
 export const Inicio = () => {
-    const { store, actions } = useContext(Context);
+    const { actions } = useContext(Context);
 
     const [signupData, setSignUpData] = useState({
         email: "",
