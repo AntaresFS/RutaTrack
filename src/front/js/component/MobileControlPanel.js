@@ -39,6 +39,11 @@ const MobileControlPanel = () => {
 
                         <h2 className="text-xl font-bold mb-4">Menú</h2>
                         <ul className="space-y-2">
+                            <li><Link to="/Mapa" onClick={() => setIsOpen(false)}><FontAwesomeIcon icon={faMapMarkedAlt} /> Planner (Ruta)</Link></li>
+                            <li><Link to="/direcciones" onClick={() => setIsOpen(false)}><FontAwesomeIcon icon={faHome} /> Mis Direcciones</Link></li>
+                            <li><Link to="/flota" onClick={() => setIsOpen(false)}><FontAwesomeIcon icon={faTruck} /> Vehículos</Link></li>
+                            <li><Link to="/autonomos" onClick={() => setIsOpen(false)}><FontAwesomeIcon icon={faUserTie} /> Autónomos</Link></li>
+                            <li><Link to="/clientes" onClick={() => setIsOpen(false)}><FontAwesomeIcon icon={faUsers} /> Clientes</Link></li>
                         </ul>
 
                         <button onClick={() => { handleClick(); setIsOpen(false); }} className="my-profile-button mt-4 flex items-center gap-2">

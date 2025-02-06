@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
+import { Context } from '../store/appContext';
 import { Loader } from '@googlemaps/js-api-loader';
 import CalculateDistance from '../component/calculateDistance';
 import MobileControlPanel from "../component/DesktopControlPanel";
@@ -12,6 +13,7 @@ const Mapa = () => {
     const [map, setMap] = useState(null);
     const [directionsRenderer, setDirectionsRenderer] = useState(null);
     const [routeInfo, setRouteInfo] = useState(null);
+    const { store, actions } = useContext(Context);
     const navigate = useNavigate();
 
     // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla

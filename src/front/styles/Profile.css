@@ -154,9 +154,3 @@ body {
   height: 100%; /* Ocupa el 100% del alto del contenedor */
   border-style: solid;
 }
-
-@media (max-width: 768px) {
-  .profile-map-section {
-    display: none; /* Oculta el mapa en pantallas pequeñas */
-  }
-}
