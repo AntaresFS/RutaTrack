@@ -4,9 +4,11 @@ import { FaTrash } from "react-icons/fa";
 import { LuPenSquare } from "react-icons/lu";
 import { jwtDecode } from 'jwt-decode';
 import ColaboradorForm from '../component/colaboradorForm';
-import ControlPanel from '../component/panelControl';
+import DesktopControlPanel from '../component/DesktopControlPanel';
+import MobileControlPanel from '../component/MobileControlPanel';
 
 const Autonomos = () => {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [colaboradores, setColaboradores] = useState([]);
   const [formData, setFormData] = useState({
     nombre: '',
@@ -20,8 +22,25 @@ const Autonomos = () => {
   const [warning, setWarning] = useState('');
   const [currentUserId, setCurrentUserId] = useState(null);
   const [isEditing, setIsEditing] = useState(false); // Estado para manejar si es edición o no
-  const [colaboradorId, setColaboradorId] = useState(null); // Para guardar el ID del colaborador a editar
 
+
+  // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Cargar usuario desde el localStorage si no está en el store
+  useEffect(() => {
+    if (!store.user) {
+      actions.getUserFromLocalStorage();
+    }
+  }, []); // Solo se ejecuta una vez al montar el componente
+
+  // Obtener el user_id del token y los colaboradores del usuario
   useEffect(() => {
     const obtenerUserIdYColaboradores = async () => {
       const token = localStorage.getItem('token');
@@ -45,13 +64,15 @@ const Autonomos = () => {
     };
 
     obtenerUserIdYColaboradores();
-  }, []);
+  }, []); // Solo se ejecuta una vez al montar el componente
 
+  // Manejar cambios en los campos del formulario
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({ ...formData, [name]: type === 'checkbox' ? checked : value });
   };
 
+  // Validar el formulario antes de enviarlo
   const validarFormulario = () => {
     let errores = [];
     const { nombre, email, tipoPrecio, precio, periodosEspera } = formData;
@@ -75,6 +96,7 @@ const Autonomos = () => {
     return errores;
   };
 
+  // Agregar un nuevo colaborador
   const agregarColaborador = useCallback(async () => {
     if (!currentUserId) {
       console.error('No se encontró el user_id');
@@ -82,6 +104,7 @@ const Autonomos = () => {
       return;
     }
 
+    // Validar el formulario antes de enviarlo
     const errores = validarFormulario();
     if (errores.length > 0) {
       setWarning(errores.join(' '));
@@ -125,6 +148,7 @@ const Autonomos = () => {
     }
   }, [currentUserId, formData, colaboradores]);
 
+  // Eliminar un colaborador
   const eliminarColaborador = async (email) => {
     try {
       await axios.delete(`${process.env.BACKEND_URL}/api/socios/${email}?user_id=${currentUserId}`);
@@ -136,6 +160,7 @@ const Autonomos = () => {
     }
   };
 
+  // Editar un colaborador
   const editarColaborador = (email) => {
     const colaborador = colaboradores.find((colaborador) => colaborador.email === email);
     if (colaborador) {
@@ -153,15 +178,15 @@ const Autonomos = () => {
       modal.show(); // Mostrar el modal
     }
   };
-  
 
+  // Actualizar datos de un colaborador en la API
   const actualizarColaborador = async () => {
     const errores = validarFormulario();
     if (errores.length > 0) {
       setWarning(errores.join(' '));
       return;
     }
-  
+
     try {
       // Usar el email del formData en la URL de la solicitud PUT
       await axios.put(`${process.env.BACKEND_URL}/api/socios/${formData.email}`, {
@@ -173,12 +198,12 @@ const Autonomos = () => {
         incluir_peajes: formData.incluirPeajes,
         user_id: currentUserId
       });
-  
+
       // Actualizar la lista de colaboradores
       setColaboradores(colaboradores.map(colaborador =>
         colaborador.email === formData.email ? { ...colaborador, ...formData } : colaborador
       ));
-  
+
       // Reiniciar el formulario y estado de edición
       setFormData({
         nombre: '',
@@ -189,7 +214,7 @@ const Autonomos = () => {
         incluirPeajes: false
       });
       setIsEditing(false);
-  
+
       const modalElement = document.getElementById('modalAgregarSocio');
       const modal = window.bootstrap.Modal.getInstance(modalElement);
       modal.hide();
@@ -203,6 +228,7 @@ const Autonomos = () => {
     }
   };
 
+  // Manejar el envío del formulario
   const manejarSubmit = async (e) => {
     e.preventDefault();
     if (isEditing) {
@@ -214,7 +240,10 @@ const Autonomos = () => {
 
   return (
     <div className="min-vh-100 d-flex">
-      <ControlPanel />
+
+      {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
+      {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
+
       <div className="container-fluid p-4">
         <div className="d-flex justify-content-between align-items-center">
           <h2 className="d-inline-flex mb-3">Colaboradores</h2>

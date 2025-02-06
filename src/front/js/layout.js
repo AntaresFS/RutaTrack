@@ -28,17 +28,17 @@ import Autonomos from "./pages/Autonomos";
 
 //create your first component
 const Layout = () => {
-    const basename = process.env.BASENAME || "";
+    const my_basename = process.env.MY_BASENAME || "";
 
     if (!process.env.BACKEND_URL || process.env.BACKEND_URL == "") return <BackendURL />;
 
     return (
         <div className="app-container">
-            <BrowserRouter basename={basename}>
+            <BrowserRouter my_basename={my_basename}>
                 <ScrollToTop>
                     <Navbar />
                     {/* Agregamos un contenedor para el contenido principal */}
-                    <div className="content-wrapper">
+                    <div className="content-wrapper h-100">
                         <Routes>
                             <Route element={<Inicio />} path="/" />
                             <Route element={<SobreNosotros />} path="/SobreNosotros" />

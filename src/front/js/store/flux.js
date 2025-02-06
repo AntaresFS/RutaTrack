@@ -28,7 +28,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // Función para establecer los datos del usuario
             setUser: (user) => {
-                console.log("Actualizando el usuario en el Store:", user); 
+                console.log("Actualizando el usuario en el Store:", user);
                 setStore({ user });  // Actualiza el estado global del usuario
             },
 
@@ -38,7 +38,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 if (token) {
                     const user = JSON.parse(localStorage.getItem("user"));
                     if (user) {
-                        console.log("CArgando usuario del store:", user);
+                        console.log("Cargando usuario del store:", user);
                     }
                 }
             },
@@ -46,7 +46,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             // Función para recuperar los datos del usuario
             getUserFromLocalStorage: () => {
                 const user = JSON.parse(localStorage.getItem("user"));
-                if (user) setStore({ user});  // Restaura el estado global si hay datos guardados
+                if (user) setStore({ user });  // Restaura el estado global si hay datos guardados
             },
 
             // Función para cargar los datos del usuario REVISAR!!

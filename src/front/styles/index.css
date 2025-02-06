@@ -2,45 +2,43 @@
     General Styles used on every website (Don't Repeat Yourself)
 */
 
-html, body, #root {
-    height: 100%;
-    margin: 0;
-  }
-  
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-  }
-  
-  .app-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* 100% del viewport */
-  }
-  
-  .content-wrapper {
-    flex: 1; /* Toma todo el espacio disponible */
-  }
-  
-  /* Estilos para los modales */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
 
-  .modal-dialog {
-    max-width: 90vw;
-    min-width: 300px;
-    width: auto;
-  }
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
 
-  /* Modal styles */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 100% del viewport */
+}
+
+.content-wrapper {
+  flex: 1; /* Toma todo el espacio disponible */
+}
+
+/* Estilos para los modales */
+
+.modal-dialog {
+  max-width: 90vw;
+  min-width: 300px;
+  width: auto;
+}
+
+/* Modal styles */
 
 .card {
   background: #fff;
   padding: 20px;
   border-radius: 10px;
-}
-
-.text-right a {
-  color: #007bff;
 }
 
 .warning-message {
@@ -51,5 +49,3 @@ html, body, #root {
   border-radius: 5px;
   margin-top: 10px;
 }
-
-
