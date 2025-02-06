@@ -3,16 +3,12 @@ import axios from 'axios';
 import { FaTrash } from "react-icons/fa";
 import { LuPenSquare } from "react-icons/lu";
 import { MdGroups } from "react-icons/md";
-import MobileControlPanel from "../component/DesktopControlPanel";
-import DesktopControlPanel from "../component/DesktopControlPanel";
 import '../../styles/Clientes.css';
-
-
+import ControlPanel from '../component/panelControl';
 
 
 const ClientListTable = () => {
     // Estados para manejar la interfaz de usuario y los datos
-    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingClientIndex, setEditingClientIndex] = useState(null);
     const [newClient, setNewClient] = useState({
@@ -23,22 +19,6 @@ const ClientListTable = () => {
     });
     const [clients, setClients] = useState([]);
     const [error, setError] = useState(null); // Nuevo estado para manejar errores
-
-    // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
-    useEffect(() => {
-        const handleResize = () => {
-            setIsMobile(window.innerWidth < 768);
-        };
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, []);
-
-    // Cargar usuario desde el localStorage si no está en el store
-    useEffect(() => {
-        if (!store.user) {
-            actions.getUserFromLocalStorage();
-        }
-    }, []); // Solo se ejecuta una vez al montar el componente
 
     // Efecto para cargar los clientes al montar el componente 
     useEffect(() => {
@@ -139,10 +119,7 @@ const ClientListTable = () => {
 
     return (
         <div className="min-vh-100 d-flex">
-
-            {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
-            {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
-
+            <ControlPanel />
             <div className="container-fluid py-4">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h2 className="fw-semibold">Clientes</h2>
