@@ -2,6 +2,7 @@
     General Styles used on every website (Don't Repeat Yourself)
 */
 
+
 html,
 body,
 #root {
@@ -29,7 +30,6 @@ body {
 }
 
 /* Estilos para los modales */
-
 .modal-dialog {
   max-width: 90vw;
   min-width: 300px;
@@ -37,11 +37,14 @@ body {
 }
 
 /* Modal styles */
-
 .card {
   background: #fff;
   padding: 20px;
   border-radius: 10px;
+}
+
+.text-right a {
+  color: #007bff;
 }
 
 .warning-message {
@@ -52,3 +55,5 @@ body {
   border-radius: 5px;
   margin-top: 10px;
 }
+
+

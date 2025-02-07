@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Loader } from '@googlemaps/js-api-loader';
+import '../../styles/Profile.css'; // Archivo CSS actualizado
 import { Context } from '../store/appContext';
-import MobileControlPanel from "../component/DesktopControlPanel";
-import DesktopControlPanel from "../component/DesktopControlPanel";
-import '../../styles/Profile.css';
+import ControlPanel from "../component/panelControl";
 
 
 
 const Profile = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const apiOptions = { apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY };
     const { store, actions } = useContext(Context);
     const [map, setMap] = useState(null);
     const mapRef = useRef(null);
@@ -25,6 +23,7 @@ const Profile = () => {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
+
 
     // Cargar usuario desde el localStorage si  o está en el store
     useEffect(() => {
@@ -55,11 +54,13 @@ const Profile = () => {
             loader
                 .load()
                 .then(() => {
+
                     const mapInstance = new window.google.maps.Map(mapRef.current, {
                         center: { lat: -34.397, lng: 150.644 },
                         zoom: 6,
                     });
                     setMap(mapInstance);
+
                 })
                 .catch((e) => {
                     console.error("Error al cargar la API de Google Maps:", e);
@@ -92,49 +93,36 @@ const Profile = () => {
     }, [store.user, map]);
 
 
-    // Mostrar un mensaje de carga si no hay datos del usuario
     if (!store.user) {
-        return <p>No hay datos de localizacón de usuario.</p>;
+        return <p>Cargando...</p>;
     }
 
-
     return (
-        // Contenedor principal
-        <div className="profile-page-container h-100">
+        <div className="profile-page-container">
+            <ControlPanel />
 
-            {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
-            {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
-
-            {/* Contenido del perfil */}
             <div className="profile-section">
                 <h1>Perfil del Usuario</h1>
-                {!store.user ?
-
-                    // Mostrar un mensaje de carga si no hay datos del usuario
-                    (
-                        <div className="profile-loading">
-                            <div className="loading-circle"></div>
-                        </div>
-                    ) :
-
-                    // Mostrar los datos del usuario 
-                    (
-                        <div className="profile-card">
-                            <div className="profile-header">
-                                <img src="https://i.pravatar.cc/150" alt="Avatar" className="profile-avatar img-fluid" />
-                                <div className="profile-info">
-                                    <h2 className="profile-info-tittle">{store.user.name} {store.user.last_name}</h2>
-                                    <p className="profile-info-body"><strong>Email: </strong> {store.user.email}</p>
-                                    <p className="profile-info-body"><strong>Empresa: </strong> {store.user.company || 'No especificada'}</p>
-                                    <p className="profile-info-body"><strong>Ubicación: </strong> {store.user.location || 'No especificada'}</p>
-                                    <p className="profile-info-body"><strong>Fecha de creación: </strong> {new Date(store.user.created_at).toLocaleDateString()}</p>
-                                </div>
+                {!store.user ? (
+                    <div className="profile-loading">
+                        <div className="loading-circle"></div>
+                    </div>
+                ) : (
+                    <div className="profile-card">
+                        <div className="profile-header">
+                            <img src="https://i.pravatar.cc/150" alt="Avatar" className="profile-avatar" />
+                            <div className="profile-info">
+                                <h2>{store.user.name} {store.user.last_name}</h2>
+                                <p><strong>Email:</strong> {store.user.email}</p>
+                                <p><strong>Empresa:</strong> {store.user.company || 'No especificada'}</p>
+                                <p><strong>Ubicación:</strong> {store.user.location || 'No especificada'}</p>
+                                <p><strong>Cuenta creada en:</strong> {new Date(store.user.created_at).toLocaleDateString()}</p>
                             </div>
                         </div>
-                    )}
+                    </div>
+                )}
             </div>
 
-            {/* Sección del mapa */}
             <div className="profile-map-section">
                 <div ref={mapRef} className="map-container"></div>
             </div>
