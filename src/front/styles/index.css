@@ -2,21 +2,17 @@
     General Styles used on every website (Don't Repeat Yourself)
 */
 
-
 html,
 body,
 #root {
   height: 100%;
-  width: 100%;
   margin: 0;
 }
 
 body {
   display: flex;
   flex-direction: column;
-  /height: 100%;
-  width: 100%;
-  margin: 0;
+  min-height: 100%;
 }
 
 .app-container {
@@ -30,6 +26,7 @@ body {
 }
 
 /* Estilos para los modales */
+
 .modal-dialog {
   max-width: 90vw;
   min-width: 300px;
@@ -37,14 +34,11 @@ body {
 }
 
 /* Modal styles */
+
 .card {
   background: #fff;
   padding: 20px;
   border-radius: 10px;
-}
-
-.text-right a {
-  color: #007bff;
 }
 
 .warning-message {
@@ -55,5 +49,3 @@ body {
   border-radius: 5px;
   margin-top: 10px;
 }
-
-

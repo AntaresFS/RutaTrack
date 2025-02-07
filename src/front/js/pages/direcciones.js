@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import axios from "axios";
 import { Loader } from '@googlemaps/js-api-loader';
-import "../../styles/direccion.css";
 import { Context } from '../store/appContext';
-import ControlPanel from '../component/panelControl';
+import MobileControlPanel from "../component/DesktopControlPanel";
+import DesktopControlPanel from "../component/DesktopControlPanel";
+import "../../styles/direccion.css";
+
 
 export const Direcciones = () => {
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const { store } = useContext(Context);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [map, setMap] = useState(null);
@@ -51,6 +54,22 @@ export const Direcciones = () => {
         setSelectedCountry(null);
         setWarning("");
     };
+
+    // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    // Cargar usuario desde el localStorage si no está en el store
+    useEffect(() => {
+        if (!store.user) {
+            actions.getUserFromLocalStorage();
+        }
+    }, []); // Solo se ejecuta una vez al montar el componente
 
     useEffect(() => {
         if (currentUserId) {
@@ -248,7 +267,10 @@ export const Direcciones = () => {
 
     return (
         <div className="min-vh-100 d-flex">
-            <ControlPanel />
+
+            {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
+            {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
+
             <div className="container mt-4">
                 <div className="direcciones-header d-flex justify-content-between align-items-center mb-4">
                     <h3>Mis Direcciones</h3>
