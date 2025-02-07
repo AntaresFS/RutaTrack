@@ -28,7 +28,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
             // Función para establecer los datos del usuario
             setUser: (user) => {
-                console.log("Actualizando el usuario en el Store:", user); 
+                console.log("Actualizando el usuario en el Store:", user);
                 setStore({ user });  // Actualiza el estado global del usuario
             },
 
@@ -38,7 +38,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                 if (token) {
                     const user = JSON.parse(localStorage.getItem("user"));
                     if (user) {
-                        console.log("CArgando usuario del store:", user);
+                        console.log("Cargando usuario del store:", user);
                     }
                 }
             },
@@ -46,38 +46,41 @@ const getState = ({ getStore, getActions, setStore }) => {
             // Función para recuperar los datos del usuario
             getUserFromLocalStorage: () => {
                 const user = JSON.parse(localStorage.getItem("user"));
-                if (user) setStore({ user});  // Restaura el estado global si hay datos guardados
+                if (user) setStore({ user });  // Restaura el estado global si hay datos guardados
             },
 
-            // Función para cargar los datos del usuario REVISAR!!
+            // Función para cargar los datos del usuario desde el localStorage
             fetchUserData: async () => {
                 try {
-                    const token = localStorage.getItem("token");
+                    // Obtener el token del localStorage
+                    const token = localStorage.getItem("accessToken");
 
+                    // Verificar si el token existe
                     if (!token) {
                         throw new Error("Token no disponible.");
                     }
 
-                    const apiUrl = `${process.env.BACKEND_URL}/api/user`;
-                    const headers = {
-                        Authorization: `Bearer ${token}`
-                    };
+                    // Obtener los datos del usuario desde el localStorage
+                    const userData = localStorage.getItem("user");
 
-                    const response = await axios.get(apiUrl, { headers });
+                    // Verificar si los datos del usuario existen
+                    if (!userData) {
+                        throw new Error("Datos del usuario no disponibles.");
+                    }
 
-                    // Almacena los datos del usuario en el estado global
-                    setStore({ userData: response.data });
+                    // Parsear los datos del usuario desde JSON
+                    const parsedUserData = JSON.parse(userData);
+
+                    // Almacenar los datos del usuario en el estado global
+                    setStore({ userData: parsedUserData });
 
                 } catch (err) {
                     console.log("Error al cargar los datos del usuario:", err.message);
                 }
             },
 
-            // Nueva función para obtener el userId
-            getUserId: () => {
-                const store = getStore();
-                return store.userData.id;  // Asegúrate de que esto apunte al ID correcto del usuario
-            },
+
+
 
             // Nueva función para actualizar los datos del usuario
             updateUserData: (updatedUserData) => {
