@@ -1,56 +1,15 @@
-html, body {
-    height: 100%; /* Asegura que html y body ocupen el 100% de la altura */
-    margin: 0; /* Elimina márgenes por defecto */
-}
+/* Estilos para la página de perfil */
 
+/* Profile Page Container */
 .profile-page-container {
-    display: flex; /* Flexbox para disposición horizontal */
-    height: 100vh; /* Altura completa de la ventana */
-}
-
-.profile-control-panel {
-    flex: 0 0 18%; /* Control Panel ocupa el 15% del ancho */
-    background-color: #f9f9f9;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-y: auto; /* Desplazamiento vertical si es necesario */
-}
-
-.profile-control-panel h1 {
-    font-size: 1.8rem;
-    color: #ffc107;
-    margin-bottom: 20px;
-}
-
-.profile-control-panel ul {
-    list-style-type: none;
-    padding: 0;
-}
-
-.profile-control-panel li {
-    margin-bottom: 20px;
-}
-
-.profile-control-panel a {
-    text-decoration: none;
-    color: #333;
-    font-size: 1.3rem;
-    display: flex;
-    align-items: center;
-}
-
-.profile-control-panel a:hover {
-    color: #007BFF;
-}
-
-.profile-control-panel a svg {
-    margin-right: 12px;
+  display: flex; /* Flexbox para disposición horizontal */
+  height: 100%; /* Altura completa de la ventana */
+  overflow: hidden; /* Ocultar el desbordamiento */
 }
 
 .profile-section {
   position: relative; /* Necesario para el pseudo-elemento */
-  flex: 30%; /* Ocupa un 30% del ancho */
+  flex: 50%; /* Ocupa un 30% del ancho */
   padding: 20px;
   width: auto;
 
@@ -89,15 +48,19 @@ html, body {
 }
 
 .profile-card {
-    background-color: #161515;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    padding: 60px;
-    display: flex;
-    align-items: center;
-    gap: 30px;
-    text-align: center;
-    flex-direction: column;
+  background-color: #161515;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 50px;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  text-align: center;
+  flex-direction: column;
+  width: auto;
+  max-width: 400px;
+  height: 100%;
+  margin-bottom: 10%;
 }
 
 .profile-avatar {
@@ -155,17 +118,13 @@ html, body {
 
 .profile-map-section {
   flex: 50%; /* Ocupa la mitad del ancho disponible */
-  display: flex;
-  width: 80%;
+  width: 100%;
   height: 100%;
-  justify-content: center;
-  align-items: center;
-  height: 100%; /* Ajustar la altura para ocupar el espacio restante */
 }
 
 .map-container {
   width: 100%;
   height: 100%; /* Ocupa el 100% del alto del contenedor */
-  min-height: 500px;
+  min-height: 700px; /* Altura mínima del mapa */
   border-style: solid;
 }
