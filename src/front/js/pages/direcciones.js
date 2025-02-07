@@ -409,7 +409,7 @@ export const Direcciones = () => {
                                     </form>
                                 </div>
                             </div>
-                            <div className="map-section" ref={mapRef}></div>
+                            <div className="addresses-map-section" ref={mapRef}></div>
                         </div>
                         <div className="modal-footer">
                             {warning && (

@@ -1,21 +1,16 @@
 /* Estilos para la página de perfil */
 
-html,
-body {
-  height: 100%; /* Asegura que html y body ocupen el 100% de la altura */
-  margin: 0; /* Elimina márgenes por defecto */
-}
-
+/* Profile Page Container */
 .profile-page-container {
   display: flex; /* Flexbox para disposición horizontal */
   height: 100%; /* Altura completa de la ventana */
-  overflow: hidden;
+  overflow: hidden; /* Ocultar el desbordamiento */
 }
 
 /* Profile Section */
 .profile-section {
   position: relative; /* Necesario para el pseudo-elemento */
-  flex: 30%; /* Ocupa un 30% del ancho */
+  flex: 50%; /* Ocupa un 30% del ancho */
   padding: 20px;
   width: auto;
 
@@ -65,7 +60,7 @@ body {
   flex-direction: column;
   width: auto;
   max-width: 400px;
-  height: auto;
+  height: 100%;
   margin-bottom: 10%;
 }
 
@@ -143,17 +138,13 @@ body {
 /* Map Section */
 .profile-map-section {
   flex: 50%; /* Ocupa la mitad del ancho disponible */
-  display: flex;
-  width: 80%;
+  width: 100%;
   height: 100%;
-  justify-content: center;
-  align-items: center;
-  height: 100%; /* Ajustar la altura para ocupar el espacio restante */
 }
 
 .map-container {
   width: 100%;
   height: 100%; /* Ocupa el 100% del alto del contenedor */
-  min-height: 500px;
+  min-height: 700px; /* Altura mínima del mapa */
   border-style: solid;
 }
