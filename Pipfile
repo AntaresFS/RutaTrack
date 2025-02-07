@@ -19,10 +19,10 @@ cloudinary = "*"
 flask-admin = "*"
 Flask-Mail= "*"
 typing-extensions = "*"
-jwt= "*"
 flask-mail = "*"
 flask-jwt-extended = "==4.4.4"
 pyjwt = "<3"
+pytz = "*"
 
 [requires]
 python_version = "3.10"

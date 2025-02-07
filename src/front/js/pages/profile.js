@@ -1,197 +1,157 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
 import { Loader } from '@googlemaps/js-api-loader';
-import '../../styles/Profile.css'; // Archivo CSS actualizado
 import { Context } from '../store/appContext';
+import MobileControlPanel from "../component/DesktopControlPanel";
+import DesktopControlPanel from "../component/DesktopControlPanel";
+import '../../styles/Profile.css';
+
 
 
 const Profile = () => {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const apiOptions = { apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY };
+    const { store, actions } = useContext(Context);
     const [map, setMap] = useState(null);
     const mapRef = useRef(null);
-    const { store, actions } = useContext(Context);
-    const navigate = useNavigate();
 
+    // Mostrar el tamaño de la pantalla en la consola
+    console.log(isMobile)
 
-
-
-    // Función para obtener los datos del usuario autenticado
-    const fetchUserData = async () => {
-        try {
-            const token = localStorage.getItem("token");
-            const response = await axios.get(`${process.env.BACKEND_URL}/api/user`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
-            setUser(response.data);
-        } catch (err) {
-            setError("No se pudieron cargar los datos del usuario.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const initializeMap = () => {
-        const loader = new Loader({
-            apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
-            version: 'weekly',
-        });
-        loader.load().then(() => {
-            const newMap = new window.google.maps.Map(mapRef.current, {
-                center: { lat: -34.397, lng: 150.644 },
-                zoom: 8,
-            });
-            setMap(newMap);
-        }).catch(e => {
-            console.error("Error al cargar la API de Google Maps: ", e);
-        });
-    };
-
-
-
-    const handleLogout = () => {
-        // Eliminar el token de autenticación de localStorage
-        localStorage.removeItem('authToken');
-
-        // Redirigir a la página de inicio de sesión usando la variable global del .env
-        window.location.href = process.env.REACT_APP_BACKEND_URL;
-    };
-
-    const searchLocation = async (location) => {
-        if (!map || !location) return;
-
-        const geocoder = new window.google.maps.Geocoder();
-        geocoder.geocode({ address: location }, (results, status) => {
-            if (status === 'OK') {
-                const { lat, lng } = results[0].geometry.location;
-                map.setCenter({ lat: lat(), lng: lng() });
-                new window.google.maps.Marker({
-                    position: { lat: lat(), lng: lng() },
-                    map: map,
-                });
-            } else {
-                console.error('Geocode was not successful for the following reason: ' + status);
-            }
-        });
-    };
-
+    // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                // Iniciar el estado de carga
-                setLoading(true);
-
-                // Llamar a la función de Flux para obtener los datos del usuario
-                await actions.fetchUserData();
-
-                // Actualizar el estado 'user' cuando los datos se obtienen
-                if (store.userData) {
-                    setUser(store.userData);
-                    console.log(store.userData)
-                }
-            } catch (error) {
-                // Manejar el error
-                console.error("Error al obtener los datos del usuario:", error);
-                setError(error);  // Opcionalmente, puedes usar setError para manejar los errores
-            } finally {
-                // Detener el estado de carga al finalizar
-                setLoading(false);
-            }
+        const handleResize = () => {
+            setIsMobile(window.innerWidth < 768);
         };
-
-        fetchData();
-    }, []); // El array vacío asegura que solo se ejecute una vez al montar el componente
-
-    useEffect(() => {
-        initializeMap();
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    // Cargar usuario desde el localStorage si no está en el store
     useEffect(() => {
-        if (user && user.location) {
-            searchLocation(user.location);
+        if (!store.user) {
+            actions.getUserFromLocalStorage(); // Obtener datos solo si no están en el store
         }
-    }, [user, map]);
+    }, []); // Solo se ejecuta una vez al montar el componente
+
+
+    // Inicializar el mapa cuando el componente se monta
+    useEffect(() => {
+        // Si no hay referencia al mapa, no hacer nada
+        if (!mapRef.current) return;
+
+        // Crear una instancia del Loader de Google Maps
+        const loader = new Loader({
+            apiKey: apiOptions.apiKey,
+            version: "weekly",
+            libraries: ["places"]
+        });
+
+        // Cargar la API de Google Maps
+        loader.load().then(() => {
+            const mapInstance = new window.google.maps.Map(mapRef.current, {
+                center: { lat: 40.416775, lng: -3.703790 }, // Ubicación por defecto Madrid
+                zoom: 12,
+            });
+            const geocoder = new window.google.maps.Geocoder();
+
+            geocoder.geocode({ address: store.user.location }, (results, status) => {
+                if (status === "OK" && results[0]) {
+                    const userLocation = results[0].geometry.location;
+
+                    // Centrar el mapa en la ubicación del usuario
+                    mapInstance.setCenter(userLocation);
+
+                    // Agregar marcador en la ubicación del usuario
+                    new window.google.maps.Marker({
+                        position: userLocation,
+                        map: mapInstance,
+                        title: "Ubicación del usuario",
+                    });
+
+                    setMap(mapInstance);
+                } else {
+                    console.error("No se encontró la ubicación del usuario:", status);
+                }
+            });
+        }).catch((e) => {
+            console.error("Error al cargar Google Maps:", e);
+        });
+    }, [store.user?.location]); // Se ejecuta cuando cambia la ubicación del usuario
+
+
+
+    // Actualizar la ubicación en el mapa cuando el usuario cambia
+    useEffect(() => {
+
+        // Si no hay ubicación del usuario o no hay mapa, no hacer nada
+        if (!store.user?.location || !map) return;
+
+        // Crear una instancia del geocodificador de Google Maps
+        const geocoder = new window.google.maps.Geocoder();
+
+        // Buscar la ubicación del usuario
+        geocoder.geocode({ address: store.user.location }, (results, status) => {
+
+            // Si se encontró la ubicación, centrar el mapa y agregar un marcador
+            if (status === "OK" && results[0]) {
+                const { lat, lng } = results[0].geometry.location;
+                const newPosition = { lat: lat(), lng: lng() };
+
+                map.setCenter(newPosition);
+                new window.google.maps.Marker({
+                    position: newPosition,
+                    map,
+                });
+            } else {
+                console.error("No se encontró la ubicación:", status);
+            }
+        });
+
+    }, [store.user?.location, map]); // Se ejecuta solo si cambia la ubicación del usuario o el mapa
+
+    // Mostrar un mensaje de carga si no hay datos del usuario
+    if (!store.user) {
+        return <p>No hay datos de localizacón de usuario.</p>;
+    }
+
 
     return (
-        <div className="profile-page-container">
-            <div className="profile-control-panel">
-                <h1>Panel de Control</h1>
-                <ul>
-                    <li>
-                        <Link
-                            to="/Mapa"
-                            onClick={() => {
-                                window.location.href = "/Mapa";
-                            }}
-                        >
-                            <FontAwesomeIcon icon={faMapMarkedAlt} /> Planner (Ruta)
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/direcciones">
-                            <FontAwesomeIcon icon={faHome} /> Mis Direcciones
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/flota">
-                            <FontAwesomeIcon icon={faTruck} /> Vehículos
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/autonomos">
-                            <FontAwesomeIcon icon={faUserTie} /> Autónomos
-                        </Link>
-                    </li>
-                    <li>
-                        <Link to="/clientes">
-                            <FontAwesomeIcon icon={faUsers} /> Clientes
-                        </Link>
-                    </li>
-                </ul>
-                <Link >
-                    <button onClick={handleLogout} className="logout-button">
-                        <FontAwesomeIcon icon={faSignOutAlt} /> Cerrar Sesión
-                    </button>
-                </Link>
+        // Contenedor principal
+        <div className="profile-page-container h-100">
 
-            </div>
+            {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
+            {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
 
+            {/* Contenido del perfil */}
             <div className="profile-section">
                 <h1>Perfil del Usuario</h1>
-                {loading ? (
-                    <div className="profile-loading">
-                        <div className="loading-circle"></div>
-                    </div>
-                ) : error ? (
-                    <div className="profile-error">
-                        <p>{error}</p>
-                    </div>
-                ) : user ? (
-                    <div className="profile-card">
-                        <div className="profile-header">
-                            <img src="https://i.pravatar.cc/150" alt="Avatar" className="profile-avatar" />
-                            <div className="profile-info">
-                                <h2>{user.name} {user.last_name}</h2>
-                                <p><strong>Email:</strong> {user.email}</p>
-                                <p><strong>Empresa:</strong> {user.company || 'No especificada'}</p>
-                                <p><strong>Ubicación:</strong> {user.location || 'No especificada'}</p>
-                                <p><strong>Cuenta creada en:</strong> {new Date(user.created_at).toLocaleDateString()}</p>
+                {!store.user ?
+
+                    // Mostrar un mensaje de carga si no hay datos del usuario
+                    (
+                        <div className="profile-loading">
+                            <div className="loading-circle"></div>
+                        </div>
+                    ) :
+
+                    // Mostrar los datos del usuario 
+                    (
+                        <div className="profile-card">
+                            <div className="profile-header">
+                                <img src="https://i.pravatar.cc/150" alt="Avatar" className="profile-avatar img-fluid" />
+                                <div className="profile-info">
+                                    <h2 className="profile-info-tittle">{store.user.name} {store.user.last_name}</h2>
+                                    <p className="profile-info-body"><strong>Email: </strong> {store.user.email}</p>
+                                    <p className="profile-info-body"><strong>Empresa: </strong> {store.user.company || 'No especificada'}</p>
+                                    <p className="profile-info-body"><strong>Ubicación: </strong> {store.user.location || 'No especificada'}</p>
+                                    <p className="profile-info-body"><strong>Fecha de creación: </strong> {new Date(store.user.created_at).toLocaleDateString()}</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="profile-no-data">
-                        <p>No se encontraron datos del usuario.</p>
-                    </div>
-                )}
+                    )}
             </div>
 
+            {/* Sección del mapa */}
             <div className="profile-map-section">
                 <div ref={mapRef} className="map-container"></div>
             </div>

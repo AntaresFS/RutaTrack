@@ -1,24 +1,51 @@
-html, body, #root {
-    height: 100%;
-    margin: 0;
-  }
-  
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-  }
-  
-  .app-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* 100% del viewport */
-  }
-  
-  .content-wrapper {
-    flex: 1; /* Toma todo el espacio disponible */
-  }
-  
 /* 
     General Styles used on every website (Don't Repeat Yourself)
 */
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* 100% del viewport */
+}
+
+.content-wrapper {
+  flex: 1; /* Toma todo el espacio disponible */
+}
+
+/* Estilos para los modales */
+
+.modal-dialog {
+  max-width: 90vw;
+  min-width: 300px;
+  width: auto;
+}
+
+/* Modal styles */
+
+.card {
+  background: #fff;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.warning-message {
+  background-color: #f8d7da; /* Fondo rojo claro */
+  color: #721c24; /* Texto rojo oscuro */
+  border: 1px solid #f5c6cb; /* Borde rojo claro */
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}

@@ -107,13 +107,13 @@ export const Navbar = () => {
         <>
             <nav className="navbar navbar-expand-lg navbar-dark bg-dark"
                 style={{
-                    padding: '0.5rem 1.5rem',
                     position: 'fixed',
                     top: 0,
                     left: 0,
                     right: 0,
                     zIndex: 1000,
-                    height: '56px'
+                    height: '56px',
+                    width: '100%',
                 }}>
                 <div className="container-fluid">
                     {isHomePage ? (

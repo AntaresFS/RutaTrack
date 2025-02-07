@@ -38,7 +38,7 @@ const Layout = () => {
                 <ScrollToTop>
                     <Navbar />
                     {/* Agregamos un contenedor para el contenido principal */}
-                    <div className="content-wrapper">
+                    <div className="content-wrapper h-100">
                         <Routes>
                             <Route element={<Inicio />} path="/" />
                             <Route element={<SobreNosotros />} path="/SobreNosotros" />
