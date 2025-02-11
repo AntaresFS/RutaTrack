@@ -99,7 +99,7 @@ const Autonomos = () => {
 
     try {
       // Enviar datos del nuevo colaborador a la API de Flask usando Axios
-      const response = await axios.post(`${process.env.BACKEND_URL}/api/socios`, {
+      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/socios`, {
         user_id: 1, // Aquí deberías pasar el user_id correcto
         nombre: formData.nombre,
         email: formData.email,
@@ -137,7 +137,7 @@ const Autonomos = () => {
   // Eliminar un colaborador
   const eliminarColaborador = async (email) => {
     try {
-      await axios.delete(`${process.env.BACKEND_URL}/api/socios/${email}?user_id=${currentUserId}`);
+      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/socios/${email}?user_id=${currentUserId}`);
 
       setColaboradores(colaboradores.filter(colaborador => colaborador.email !== email));
     } catch (error) {
@@ -175,7 +175,7 @@ const Autonomos = () => {
 
     try {
       // Usar el email del formData en la URL de la solicitud PUT
-      await axios.put(`${process.env.BACKEND_URL}/api/socios/${formData.email}`, {
+      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/socios/${formData.email}`, {
         nombre: formData.nombre,
         email: formData.email, // Actualiza si es necesario
         tipo_precio: formData.tipoPrecio,

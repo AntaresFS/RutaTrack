@@ -40,7 +40,7 @@ const ClientListTable = () => {
 
     // Efecto para cargar los clientes al montar el componente 
     useEffect(() => {
-        axios.get(`${process.env.BACKEND_URL}/api/clients`)
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/clients`)
             .then(response => {
                 setClients(response.data);
             })
@@ -83,8 +83,8 @@ const ClientListTable = () => {
         };
 
         const url = editingClientIndex !== null
-            ? `${process.env.BACKEND_URL}/api/clients/${clients[editingClientIndex].id}`
-            : `${process.env.BACKEND_URL}/api/clients`;
+            ? `${process.env.REACT_APP_BACKEND_URL}/api/clients/${clients[editingClientIndex].id}`
+            : `${process.env.REACT_APP_BACKEND_URL}/api/clients`;
 
         const method = editingClientIndex !== null ? 'put' : 'post';
 
@@ -112,7 +112,7 @@ const ClientListTable = () => {
     // Manejador para eliminar un cliente
     const handleDeleteClient = (indexToDelete) => {
         const clientId = clients[indexToDelete].id;
-        axios.delete(`${process.env.BACKEND_URL}/api/clients/${clientId}`)
+        axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/clients/${clientId}`)
             .then(() => {
                 setClients(prevClients => prevClients.filter((_, index) => index !== indexToDelete));
             })

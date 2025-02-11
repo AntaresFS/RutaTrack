@@ -30,7 +30,7 @@ import Autonomos from "./pages/Autonomos";
 const Layout = () => {
     const my_basename = process.env.MY_BASENAME || "";
 
-    if (!process.env.BACKEND_URL || process.env.BACKEND_URL == "") return <BackendURL />;
+    if (!process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL == "") return <BackendURL />;
 
     return (
         <div className="app-container">

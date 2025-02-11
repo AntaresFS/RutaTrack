@@ -7,7 +7,7 @@ import { Context } from '../store/appContext'
 import "../../styles/home.css";
 
 
-const BACKEND_URL = process.env.BACKEND_URL; // Centralizamos la URL
+const REACT_APP_BACKEND_URL = process.env.REACT_APP_BACKEND_URL; // Centralizamos la URL
 const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
 export const Inicio = () => {
@@ -105,7 +105,7 @@ export const Inicio = () => {
         setMessages({ ...messages, loginWarning: "" });
 
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/token`, signupData, {
+            const response = await axios.post(`${REACT_APP_BACKEND_URL}/api/token`, signupData, {
                 headers: HEADERS,
             });
 
@@ -160,7 +160,7 @@ export const Inicio = () => {
         }
 
         try {
-            const response = await axios.post(`${BACKEND_URL}/api/register`, registerData, { headers: HEADERS });
+            const response = await axios.post(`${REACT_APP_BACKEND_URL}/api/register`, registerData, { headers: HEADERS });
 
             if (response.status === 201) {
                 setMessages({ ...messages, warning: "" })
@@ -184,7 +184,7 @@ export const Inicio = () => {
         e.preventDefault();
 
         try {
-            await axios.post(`${BACKEND_URL}/api/forgot-password`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
+            await axios.post(`${REACT_APP_BACKEND_URL}/api/forgot-password`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
             setMessages({ ...messages, successMessage: "Se ha enviado un correo electrónico a su cuenta con un enlace para restablecer su contraseña." });
             setTimeout(() => closeModal(), 3000); // Cierra el modal automáticamente después de 3 segundos
         } catch {

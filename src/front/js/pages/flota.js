@@ -98,11 +98,11 @@ export const Flota = () => {
 
                 if (vehiculoData.id) {
                     // Editar vehículo existente
-                    const response = await axios.put(`${process.env.BACKEND_URL}/api/vehiculos/${vehiculoData.id}`, updatedVehiculoData);
+                    const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos/${vehiculoData.id}`, updatedVehiculoData);
                     console.log('Vehículo editado', response.data);
                 } else {
                     // Agregar nuevo vehículo (usar POST)
-                    const response = await axios.post(`${process.env.BACKEND_URL}/api/vehiculos`, updatedVehiculoData);
+                    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos`, updatedVehiculoData);
                     console.log('Vehículo guardado', response.data);
                 }
                 fetchVehiculos();
@@ -134,7 +134,7 @@ export const Flota = () => {
 
     const fetchVehiculos = async () => {
         try {
-            const response = await axios.get(`${process.env.BACKEND_URL}/api/vehiculos`);
+            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos`);
             setVehiculos(response.data);
         } catch (error) {
             console.error('Error al obtener vehículos:', error);
@@ -149,7 +149,7 @@ export const Flota = () => {
     const handleDelete = async (id) => {
         if (window.confirm("¿Estás seguro de que quieres eliminar este vehículo?")) {
             try {
-                await axios.delete(`${process.env.BACKEND_URL}/api/vehiculos/${id}`);
+                await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos/${id}`);
                 console.log('Vehículo eliminado');
                 fetchVehiculos();
             } catch (error) {

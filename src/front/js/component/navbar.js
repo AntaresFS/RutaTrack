@@ -16,7 +16,7 @@ export const Navbar = () => {
     const [editableUserData, setEditableUserData] = useState({});
     const [isEditing, setIsEditing] = useState(false);
     const [successMessage, setSuccessMessage] = useState(''); // Estado para el mensaje de éxito
-    const backendUrl = process.env.REACT_APP_BACKEND_URL;
+    const backendUrl = process.env.REACT_APP_REACT_APP_BACKEND_URL;
 
     useEffect(() => {
         actions.fetchUserData(); // Cargar datos del usuario al montar el componente
@@ -51,7 +51,7 @@ export const Navbar = () => {
         localStorage.removeItem('authToken');
 
         // Redirigir a la página de inicio de sesión usando la variable global del .env
-        window.location.href = process.env.REACT_APP_BACKEND_URL;
+        window.location.href = process.env.REACT_APP_REACT_APP_BACKEND_URL;
     };
 
     const handleInputChange = (e) => {
@@ -71,7 +71,7 @@ export const Navbar = () => {
 
     const handleSaveChanges = async () => {
         try {
-            const response = await fetch(`${process.env.BACKEND_URL}/api/users/${store.userData.id}`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/users/${store.userData.id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

@@ -107,7 +107,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             // Función para cerrar sesión
             logout: async () => {
                 try {
-                    const resp = await axios.post(`${process.env.BACKEND_URL}/api/logout`);
+                    const resp = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`);
                     if ('resp.ok') {
                         throw new Error(`HTTP error! status: ${resp.status}`);
                     }
@@ -119,7 +119,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             // Función para obtener el mensaje del backend
             getMessage: async () => {
                 try {
-                    const resp = await fetch(`${process.env.BACKEND_URL}/api/hello`);
+                    const resp = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/hello`);
                     if (!resp.ok) {
                         throw new Error(`HTTP error! status: ${resp.status}`);
                     }

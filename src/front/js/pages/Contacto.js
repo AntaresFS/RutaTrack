@@ -17,7 +17,7 @@ const Contacto = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`${process.env.BACKEND_URL}/api/contact`, {
+            const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/contact`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -47,44 +47,44 @@ const Contacto = () => {
                             <form onSubmit={handleSubmit}>
                                 {/* Nombre */}
                                 <div className="mb-3 position-relative">
-                                    <input 
-                                        type="text" 
-                                        onChange={handleChange} 
-                                        value={formData.nombre} 
+                                    <input
+                                        type="text"
+                                        onChange={handleChange}
+                                        value={formData.nombre}
                                         className="form-control ps-5" // Add padding to the left for icon
-                                        id="nombre" 
-                                        placeholder="Tu nombre completo" 
-                                        required 
-                                        autoComplete="name" 
+                                        id="nombre"
+                                        placeholder="Tu nombre completo"
+                                        required
+                                        autoComplete="name"
                                     />
                                     <FaUser className="position-absolute" style={{ left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
                                 </div>
 
                                 {/* Correo electrónico */}
                                 <div className="mb-3 position-relative">
-                                    <input 
-                                        type="email" 
-                                        onChange={handleChange} 
-                                        value={formData.email} 
+                                    <input
+                                        type="email"
+                                        onChange={handleChange}
+                                        value={formData.email}
                                         className="form-control ps-5" // Add padding to the left for icon
-                                        id="email" 
-                                        placeholder="Tu dirección de correo electrónico" 
-                                        required 
-                                        autoComplete="email" 
+                                        id="email"
+                                        placeholder="Tu dirección de correo electrónico"
+                                        required
+                                        autoComplete="email"
                                     />
                                     <FaEnvelope className="position-absolute" style={{ left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
                                 </div>
 
                                 {/* Teléfono (opcional) */}
                                 <div className="mb-3 position-relative">
-                                    <input 
-                                        type="tel" 
-                                        onChange={handleChange} 
-                                        value={formData.telefono} 
+                                    <input
+                                        type="tel"
+                                        onChange={handleChange}
+                                        value={formData.telefono}
                                         className="form-control ps-5" // Add padding to the left for icon
-                                        id="telefono" 
-                                        placeholder="Tu número de teléfono" 
-                                        autoComplete="tel" 
+                                        id="telefono"
+                                        placeholder="Tu número de teléfono"
+                                        autoComplete="tel"
                                     />
                                     <FaPhoneAlt className="position-absolute" style={{ left: '10px', top: '50%', transform: 'translateY(-50%)' }} />
                                 </div>
@@ -92,13 +92,13 @@ const Contacto = () => {
                                 {/* Mensaje */}
                                 <div className="mb-3">
                                     <label htmlFor="mensaje" className="form-label">Mensaje</label>
-                                    <textarea 
-                                        onChange={handleChange} 
-                                        value={formData.mensaje} 
-                                        className="form-control" 
-                                        id="mensaje" 
-                                        rows="4" 
-                                        placeholder="Escribe tu mensaje aquí" 
+                                    <textarea
+                                        onChange={handleChange}
+                                        value={formData.mensaje}
+                                        className="form-control"
+                                        id="mensaje"
+                                        rows="4"
+                                        placeholder="Escribe tu mensaje aquí"
                                     ></textarea>
                                 </div>
 

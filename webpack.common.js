@@ -45,8 +45,8 @@ module.exports = {
     }),
     new Dotenv({ safe: true, systemvars: true }),
     new webpack.DefinePlugin({
-      'process.env.BACKEND_URL': JSON.stringify(process.env.BACKEND_URL),
-      'process.env.DATABASE_URL': JSON.stringify(process.env.DATABASE_URL),
+      'process.env.REACT_APP_BACKEND_URL': JSON.stringify(process.env.REACT_APP_BACKEND_URL),
+      'process.env.REACT_APP_DATABASE_URL': JSON.stringify(process.env.REACT_APP_DATABASE_URL),
     })
   ]
 };
