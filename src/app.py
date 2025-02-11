@@ -24,7 +24,7 @@ CORS(app, supports_credentials=True)
 app.url_map.strict_slashes = False
 
 # Database configuration
-db_url = os.getenv("REACT_APP_DATABASE_URL")
+db_url = os.getenv("DATABASE_URL")
 if db_url is not None:
     app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace("postgres://", "postgresql://")
 else:

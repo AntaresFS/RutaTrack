@@ -41,7 +41,7 @@ def upgrade():
         batch_op.alter_column('email',
                existing_type=sa.VARCHAR(length=120),
                nullable=True)
-        batch_op.drop_constraint('client_email_key', type_='unique')
+        # batch_op.drop_constraint('client_email_key', type_='unique')
         batch_op.create_unique_constraint('unique_user_nif', ['user_id', 'nif'])
         batch_op.create_foreign_key(None, 'users', ['user_id'], ['id'])
 
