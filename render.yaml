@@ -13,7 +13,7 @@ services:
     plan: free
     numInstances: 1
     envVars:
-      - key: BASENAME
+      - key: MY_BASENAME
         value: /
       - key: FLASK_APP
         value: src/app.py
