@@ -33,7 +33,7 @@ services:
     name: RutaTrack-Frontend
     region: ohio
     buildCommand: "cd src/front && npm install && npm run build"
-    staticPublishPath: "src/front/public"
+    staticPublishPath: "public"
     routes:
       - type: rewrite
         source: /*
