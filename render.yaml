@@ -55,7 +55,7 @@ services:
     name: RutaTrack-Frontend
     region: ohio
     buildCommand: "cd src/front && npm install && npm run build"
-    staticPublishPath: "dist"
+    staticPublishPath: "public"
     routes:
       - type: rewrite
         source: /*
