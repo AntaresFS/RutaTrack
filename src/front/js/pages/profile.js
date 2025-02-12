@@ -34,9 +34,8 @@ const Profile = () => {
     }, []); // Solo se ejecuta una vez al montar el componente
 
 
-    // Inicializar el mapa cuando el componente se monta
+    // Inicializar y actualizar el mapa cuando el componente se monta o cambia la ubicación del usuario
     useEffect(() => {
-        // Si no hay referencia al mapa, no hacer nada
         if (!mapRef.current) return;
 
         // Crear una instancia del Loader de Google Maps
@@ -52,68 +51,42 @@ const Profile = () => {
                 center: { lat: 40.416775, lng: -3.703790 }, // Ubicación por defecto Madrid
                 zoom: 12,
             });
-            const geocoder = new window.google.maps.Geocoder();
+            setMap(mapInstance);
 
-            geocoder.geocode({ address: store.user.location }, (results, status) => {
-                if (status === "OK" && results[0]) {
-                    const userLocation = results[0].geometry.location;
-
-                    // Centrar el mapa en la ubicación del usuario
-                    mapInstance.setCenter(userLocation);
-
-                    // Agregar marcador en la ubicación del usuario
-                    new window.google.maps.Marker({
-                        position: userLocation,
-                        map: mapInstance,
-                        title: "Ubicación del usuario",
-                    });
-
-                    setMap(mapInstance);
-                } else {
-                    console.error("No se encontró la ubicación del usuario:", status);
+            const updateMapLocation = () => {
+                if (!store.user?.location) {
+                    console.error("No se encontró la ubicación del usuario");
+                    return;
                 }
-            });
+
+                const geocoder = new window.google.maps.Geocoder();
+                geocoder.geocode({ address: store.user.location }, (results, status) => {
+                    if (status === "OK" && results[0]) {
+                        const userLocation = results[0].geometry.location;
+                        mapInstance.setCenter(userLocation);  // Centrar el mapa en la ubicación del usuario
+                        new window.google.maps.Marker({
+                            position: userLocation,
+                            map: mapInstance,
+                            title: "Ubicación del usuario",
+                        });  // Agregar marcador en la ubicación del usuario
+                    } else {
+                        console.error("No se encontró la ubicación del usuario:", status);
+                    }
+                });
+
+            };
+
+            updateMapLocation();
         }).catch((e) => {
             console.error("Error al cargar Google Maps:", e);
         });
     }, [store.user?.location]); // Se ejecuta cuando cambia la ubicación del usuario
 
 
-
-    // Actualizar la ubicación en el mapa cuando el usuario cambia
-    useEffect(() => {
-
-        // Si no hay ubicación del usuario o no hay mapa, no hacer nada
-        if (!store.user?.location || !map) return;
-
-        // Crear una instancia del geocodificador de Google Maps
-        const geocoder = new window.google.maps.Geocoder();
-
-        // Buscar la ubicación del usuario
-        geocoder.geocode({ address: store.user.location }, (results, status) => {
-
-            // Si se encontró la ubicación, centrar el mapa y agregar un marcador
-            if (status === "OK" && results[0]) {
-                const { lat, lng } = results[0].geometry.location;
-                const newPosition = { lat: lat(), lng: lng() };
-
-                map.setCenter(newPosition);
-                new window.google.maps.Marker({
-                    position: newPosition,
-                    map,
-                });
-            } else {
-                console.error("No se encontró la ubicación:", status);
-            }
-        });
-
-    }, [store.user?.location, map]); // Se ejecuta solo si cambia la ubicación del usuario o el mapa
-
-    // Mostrar un mensaje de carga si no hay datos del usuario
+    // Mostrar un mensaje si no hay datos del usuario
     if (!store.user) {
         return <p>No hay datos de localizacón de usuario.</p>;
     }
-
 
     return (
         // Contenedor principal
