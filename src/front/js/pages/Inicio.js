@@ -192,6 +192,11 @@ export const Inicio = () => {
         }
     };
 
+    const isAuthenticated = () => {
+        const token = localStorage.getItem('accessToken');
+        return token !== null;
+    };
+
     return (
         <div className="text-center">
             <div className="divprincipal" inert={showModal.login || showModal.register || showModal.success || showModal.forgotPassword}>
@@ -206,12 +211,20 @@ export const Inicio = () => {
                             "Transparencia y eficiencia en cada kilómetro"
                         </p>
                         <div className="button-container">
-                            <button type="button" className="btn-custom-primary" onClick={() => setShowModal({ ...showModal, login: true })}>
-                                Inicia Sesión
-                            </button>
-                            <button type="button" className="btn-custom-secondary" onClick={() => setShowModal({ ...showModal, register: true })}>
-                                Crear cuenta
-                            </button>
+                            {isAuthenticated() ? (
+                                <button type="button" className="btn-custom-primary" onClick={() => navigate("/profile")}>
+                                    Ir a mi perfil
+                                </button>
+                            ) : (
+                                <>
+                                    <button type="button" className="btn-custom-primary" onClick={() => setShowModal({ ...showModal, login: true })}>
+                                        Inicia Sesión
+                                    </button>
+                                    <button type="button" className="btn-custom-secondary" onClick={() => setShowModal({ ...showModal, register: true })}>
+                                        Crear cuenta
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
