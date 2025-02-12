@@ -1,19 +1,29 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { Context } from '../store/appContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/panelcontrol.css';
 
 const DesktopControlPanel = () => {
+    const { actions } = useContext(Context);
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        navigate('/');
+    const handleLogout = async (event) => {
+        // Prevenir el comportamiento por defecto del enlace
+        event.preventDefault();
+
+        try {
+            await actions.logout();
+            navigate('/');
+            window.location.reload(); // Ensure the UI updates correctly
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
     };
 
-    const handleClick = () => {
+    const handleProfileRedir = () => {
         window.location.href = '/profile';
     };
 
@@ -28,7 +38,7 @@ const DesktopControlPanel = () => {
                 <li><Link to="/clientes"><FontAwesomeIcon icon={faUsers} /> Clientes</Link></li>
             </ul>
 
-            <button onClick={handleClick} className="my-profile-button mt-4 flex items-center gap-2">
+            <button onClick={handleProfileRedir} className="my-profile-button mt-4 flex items-center gap-2">
                 <FontAwesomeIcon icon={faUser} /> Mi Perfil
             </button>
             <button onClick={handleLogout} className="logout-button mt-4 flex items-center gap-2 text-red-400 hover:text-red-600">

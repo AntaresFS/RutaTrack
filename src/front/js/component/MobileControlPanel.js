@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
@@ -6,16 +6,25 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/panelcontrol.css';
 
 const MobileControlPanel = () => {
+    const { actions } = useContext(Context);
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
 
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        navigate('/');
+    const handleLogout = async (event) => {
+        // Prevenir el comportamiento por defecto del enlace
+        event.preventDefault();
+
+        try {
+            await actions.logout();
+            navigate('/');
+            window.location.reload(); // Ensure the UI updates correctly
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
     };
 
-    const handleClick = () => {
-        window.location.href = '/profile';
+    const handleProfileRedir = () => {
+        navigate('/profile');
     };
 
     return (
@@ -46,7 +55,7 @@ const MobileControlPanel = () => {
                             <li><Link to="/clientes" onClick={() => setIsOpen(false)}><FontAwesomeIcon icon={faUsers} /> Clientes</Link></li>
                         </ul>
 
-                        <button onClick={() => { handleClick(); setIsOpen(false); }} className="my-profile-button mt-4 flex items-center gap-2">
+                        <button onClick={() => { handleProfileRedir(); setIsOpen(false); }} className="my-profile-button mt-4 flex items-center gap-2">
                             <FontAwesomeIcon icon={faUser} /> Mi Perfil
                         </button>
                         <button onClick={() => { handleLogout(); setIsOpen(false); }} className="logout-button mt-4 flex items-center gap-2 text-red-400 hover:text-red-600">

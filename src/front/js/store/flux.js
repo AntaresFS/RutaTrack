@@ -1,6 +1,5 @@
 import axios from "axios";
 
-
 const getState = ({ getStore, getActions, setStore }) => {
     return {
         store: {
@@ -79,9 +78,6 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 
-
-
-
             // Nueva función para actualizar los datos del usuario
             updateUserData: (updatedUserData) => {
                 setStore((prevStore) => ({
@@ -107,10 +103,10 @@ const getState = ({ getStore, getActions, setStore }) => {
             // Función para cerrar sesión
             logout: async () => {
                 try {
-                    const resp = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`);
-                    if ('resp.ok') {
-                        throw new Error(`HTTP error! status: ${resp.status}`);
-                    }
+                    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`);
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    setStore({ user: null, userData: null });
                 } catch (error) {
                     console.log("Error al intentar cerrar la sesión. Contacte con el Administrador.")
                 }

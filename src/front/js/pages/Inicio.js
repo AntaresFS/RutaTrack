@@ -43,9 +43,6 @@ export const Inicio = () => {
         forgotPasswordEmail: ""
     });
 
-    // Función para restaurar el foco al último elemento
-    const [lastFocusedElement, setLastFocusedElement] = useState(null);
-
     // Función para redirigir a otra página
     const navigate = useNavigate();
 
@@ -194,7 +191,9 @@ export const Inicio = () => {
 
     const isAuthenticated = () => {
         const token = localStorage.getItem('accessToken');
-        return token !== null;
+        const user = localStorage.getItem('user');
+        // Check if token and user data exist and are not empty
+        return token !== null && token !== "" && user !== null && user !== "";
     };
 
     return (
