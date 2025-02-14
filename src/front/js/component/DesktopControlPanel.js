@@ -1,19 +1,33 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link } from 'react-router-dom';
+import { Context } from '../store/appContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../../styles/panelcontrol.css';
 
 const DesktopControlPanel = () => {
+    const { actions } = useContext(Context);
     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.removeItem('authToken');
-        navigate('/');
+    const handleLogout = async () => {
+        // Prevenir el comportamiento por defecto del enlace
+        // event.preventDefault();
+
+        try {
+            console.log("Iniciando proceso de logout...");
+            await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, {}, { withCredentials: true });
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            actions.setStore({ user: null, userData: null });
+            console.log("Logout exitoso. Datos eliminados del localStorage.");
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
     };
 
-    const handleClick = () => {
+    const handleProfileRedir = () => {
         window.location.href = '/profile';
     };
 
@@ -28,7 +42,7 @@ const DesktopControlPanel = () => {
                 <li><Link to="/clientes"><FontAwesomeIcon icon={faUsers} /> Clientes</Link></li>
             </ul>
 
-            <button onClick={handleClick} className="my-profile-button mt-4 flex items-center gap-2">
+            <button onClick={handleProfileRedir} className="my-profile-button mt-4 flex items-center gap-2">
                 <FontAwesomeIcon icon={faUser} /> Mi Perfil
             </button>
             <button onClick={handleLogout} className="logout-button mt-4 flex items-center gap-2 text-red-400 hover:text-red-600">

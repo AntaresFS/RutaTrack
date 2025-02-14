@@ -43,9 +43,6 @@ export const Inicio = () => {
         forgotPasswordEmail: ""
     });
 
-    // Función para restaurar el foco al último elemento
-    const [lastFocusedElement, setLastFocusedElement] = useState(null);
-
     // Función para redirigir a otra página
     const navigate = useNavigate();
 
@@ -184,12 +181,17 @@ export const Inicio = () => {
         e.preventDefault();
 
         try {
-            await axios.post(`${REACT_APP_BACKEND_URL}/api/forgot-password`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
+            await axios.post(`${REACT_APP_BACKEND_URL}/api/request-password-reset`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
             setMessages({ ...messages, successMessage: "Se ha enviado un correo electrónico a su cuenta con un enlace para restablecer su contraseña." });
             setTimeout(() => closeModal(), 3000); // Cierra el modal automáticamente después de 3 segundos
         } catch {
-            setMessages({ ...messages, errorMessage: "Error al enviar el correo de recuperación." });
+            setMessages({ ...messages, errorMessage: "Error al enviar el correo de recuperación. Por favor, contacte con el Administrador." });
         }
+    };
+
+    const isAuthenticated = () => {
+        const token = localStorage.getItem('accessToken');
+        return token !== null;
     };
 
     return (
@@ -206,12 +208,20 @@ export const Inicio = () => {
                             "Transparencia y eficiencia en cada kilómetro"
                         </p>
                         <div className="button-container">
-                            <button type="button" className="btn-custom-primary" onClick={() => setShowModal({ ...showModal, login: true })}>
-                                Inicia Sesión
-                            </button>
-                            <button type="button" className="btn-custom-secondary" onClick={() => setShowModal({ ...showModal, register: true })}>
-                                Crear cuenta
-                            </button>
+                            {isAuthenticated() ? (
+                                <button type="button" className="btn-custom-primary" onClick={() => navigate("/profile")}>
+                                    Ir a mi perfil
+                                </button>
+                            ) : (
+                                <>
+                                    <button type="button" className="btn-custom-primary" onClick={() => setShowModal({ ...showModal, login: true })}>
+                                        Inicia Sesión
+                                    </button>
+                                    <button type="button" className="btn-custom-secondary" onClick={() => setShowModal({ ...showModal, register: true })}>
+                                        Crear cuenta
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

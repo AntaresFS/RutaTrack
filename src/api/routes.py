@@ -181,7 +181,7 @@ def login_user():
 
 
 # Ruta para solicitar recuperación de contraseña
-@api.route('/request-password-reset', methods=['POST'])
+@api.route('/api/request-password-reset', methods=['POST'])
 def request_password_reset():
     email = request.json.get('email')
     user = User.query.filter_by(email=email).first()

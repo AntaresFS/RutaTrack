@@ -8,7 +8,7 @@ import DesktopControlPanel from "../component/DesktopControlPanel";
 
 export const Flota = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const { actions } = useContext(Context);
+    const { store, actions } = useContext(Context);
     const [activeTab, setActiveTab] = useState('vehiculos');
     const [showModal, setShowModal] = useState(false);
     const [vehiculoData, setVehiculoData] = useState({

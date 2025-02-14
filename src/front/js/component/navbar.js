@@ -3,9 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Context } from '../store/appContext';
 import '../../styles/navbar.css'; // Archivo CSS actualizado
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt } from '@fortawesome/free-solid-svg-icons';
-
-
+import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers } from '@fortawesome/free-solid-svg-icons';
 
 export const Navbar = () => {
 
@@ -43,15 +41,17 @@ export const Navbar = () => {
         setSuccessMessage(''); // Reiniciar el mensaje de éxito al cerrar el modal
     };
 
-    const handleLogout = (event) => {
+    const handleLogout = async (event) => {
         // Prevenir el comportamiento por defecto del enlace
         event.preventDefault();
 
-        // Eliminar el token de autenticación de localStorage
-        localStorage.removeItem('authToken');
-
-        // Redirigir a la página de inicio de sesión usando la variable global del .env
-        window.location.href = process.env.REACT_APP_REACT_APP_BACKEND_URL;
+        try {
+            await actions.logout();
+            navigate('/');
+            window.location.reload(); // Ensure the UI updates correctly
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
     };
 
     const handleInputChange = (e) => {
@@ -99,7 +99,6 @@ export const Navbar = () => {
             console.error('Error al guardar los cambios:', error);
         }
     };
-
 
     const isHomePage = location.pathname === "/";
 
