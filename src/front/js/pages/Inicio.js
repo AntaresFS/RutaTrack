@@ -181,19 +181,17 @@ export const Inicio = () => {
         e.preventDefault();
 
         try {
-            await axios.post(`${REACT_APP_BACKEND_URL}/api/forgot-password`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
+            await axios.post(`${REACT_APP_BACKEND_URL}/api/request-password-reset`, { email: messages.forgotPasswordEmail }, { headers: HEADERS });
             setMessages({ ...messages, successMessage: "Se ha enviado un correo electrónico a su cuenta con un enlace para restablecer su contraseña." });
             setTimeout(() => closeModal(), 3000); // Cierra el modal automáticamente después de 3 segundos
         } catch {
-            setMessages({ ...messages, errorMessage: "Error al enviar el correo de recuperación." });
+            setMessages({ ...messages, errorMessage: "Error al enviar el correo de recuperación. Por favor, contacte con el Administrador." });
         }
     };
 
     const isAuthenticated = () => {
         const token = localStorage.getItem('accessToken');
-        const user = localStorage.getItem('user');
-        // Check if token and user data exist and are not empty
-        return token !== null && token !== "" && user !== null && user !== "";
+        return token !== null;
     };
 
     return (

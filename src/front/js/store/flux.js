@@ -103,7 +103,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             // Función para cerrar sesión
             logout: async () => {
                 try {
-                    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`);
+                    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, {}, { withCredentials: true });
                     localStorage.removeItem('accessToken');
                     localStorage.removeItem('user');
                     setStore({ user: null, userData: null });
@@ -111,6 +111,24 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.log("Error al intentar cerrar la sesión. Contacte con el Administrador.")
                 }
             },
+
+            // Función 2 para cerrar sesión
+            secondLogout: async () => {
+                try {
+                    console.log("Iniciando proceso de logout...");
+                    await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, {}, { withCredentials: true });
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('user');
+                    setStore({ user: null, userData: null });
+                    console.log("Logout exitoso. Datos eliminados del localStorage.");
+                    // Redirige a la página de inicio o recarga la página si es necesario
+                    // navigate("/");
+                } catch (error) {
+                    console.error("Error al intentar cerrar la sesión:", error);
+                    // Opcional: muestra un mensaje de error al usuario
+                }
+            },
+
 
             // Función para obtener el mensaje del backend
             getMessage: async () => {

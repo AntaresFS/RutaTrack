@@ -4,20 +4,24 @@ import { Context } from '../store/appContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMapMarkedAlt, faHome, faTruck, faUserTie, faUsers, faSignOutAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import '../../styles/panelcontrol.css';
 
 const DesktopControlPanel = () => {
     const { actions } = useContext(Context);
     const navigate = useNavigate();
 
-    const handleLogout = async (event) => {
+    const handleLogout = async () => {
         // Prevenir el comportamiento por defecto del enlace
-        event.preventDefault();
+        // event.preventDefault();
 
         try {
-            await actions.logout();
-            navigate('/');
-            window.location.reload(); // Ensure the UI updates correctly
+            console.log("Iniciando proceso de logout...");
+            await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, {}, { withCredentials: true });
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('user');
+            actions.setStore({ user: null, userData: null });
+            console.log("Logout exitoso. Datos eliminados del localStorage.");
         } catch (error) {
             console.error("Error al cerrar sesión:", error);
         }
