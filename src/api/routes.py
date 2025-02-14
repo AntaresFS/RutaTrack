@@ -208,7 +208,7 @@ def request_password_reset():
     return jsonify({"message": "Correo de recuperación enviado (provisional). Revisa los logs para obtener el enlace."}), 200
 
 # Ruta para el formulario de restablecimiento
-@api.route('/reset-password', methods=['GET', 'POST'])
+@api.route('/api/reset-password', methods=['GET', 'POST'])
 def reset_password():
     # Procesar la solicitud de restablecimiento
     data = request.json
@@ -261,7 +261,7 @@ def get_current_user():
     
       
 # Cerrar sesión
-@api.route('/logout', methods=['POST'])
+@api.route('/api/logout', methods=['POST'])
 def logout():
     response = jsonify({"message": "Cierre de sesión exitoso"})
     unset_jwt_cookies(response)  # Elimina las cookies JWT
