@@ -5,7 +5,6 @@ export const Modal = ({ title, children, onClose }) => {
     return (
         <div
             className="modal fade show d-flex justify-content-center align-items-center mh-100"
-            aria-hidden="true"
             onClick={onClose}  // Cierra el modal al hacer clic fuera   
         >
             <div
