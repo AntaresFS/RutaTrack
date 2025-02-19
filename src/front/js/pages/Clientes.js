@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
+import { Context } from '../store/appContext';
 import axios from 'axios';
 import { FaTrash } from "react-icons/fa";
 import { LuPenSquare } from "react-icons/lu";
@@ -10,6 +11,7 @@ import '../../styles/Clientes.css';
 
 const ClientListTable = () => {
     // Estados para manejar la interfaz de usuario y los datos
+    const { store, actions } = useContext(Context);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingClientIndex, setEditingClientIndex] = useState(null);
@@ -21,6 +23,7 @@ const ClientListTable = () => {
     });
     const [clients, setClients] = useState([]);
     const [error, setError] = useState(null); // Nuevo estado para manejar errores
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
     // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
     useEffect(() => {
@@ -31,16 +34,16 @@ const ClientListTable = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Cargar usuario desde el localStorage si no está en el store
+    // Cargar usuario desde el API si no está en el store
     useEffect(() => {
         if (!store.user) {
-            actions.getUserFromLocalStorage();
+            actions.fetchUserData();
         }
     }, []); // Solo se ejecuta una vez al montar el componente
 
     // Efecto para cargar los clientes al montar el componente 
     useEffect(() => {
-        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/clients`)
+        axios.get(`${BACKEND_URL}/api/clients`)
             .then(response => {
                 setClients(response.data);
             })
@@ -83,8 +86,8 @@ const ClientListTable = () => {
         };
 
         const url = editingClientIndex !== null
-            ? `${process.env.REACT_APP_BACKEND_URL}/api/clients/${clients[editingClientIndex].id}`
-            : `${process.env.REACT_APP_BACKEND_URL}/api/clients`;
+            ? `${BACKEND_URL}/api/clients/${clients[editingClientIndex].id}`
+            : `${BACKEND_URL}/api/clients`;
 
         const method = editingClientIndex !== null ? 'put' : 'post';
 
@@ -112,7 +115,7 @@ const ClientListTable = () => {
     // Manejador para eliminar un cliente
     const handleDeleteClient = (indexToDelete) => {
         const clientId = clients[indexToDelete].id;
-        axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/clients/${clientId}`)
+        axios.delete(`${BACKEND_URL}/api/clients/${clientId}`)
             .then(() => {
                 setClients(prevClients => prevClients.filter((_, index) => index !== indexToDelete));
             })
