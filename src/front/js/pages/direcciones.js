@@ -9,7 +9,7 @@ import "../../styles/direccion.css";
 
 export const Direcciones = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-    const { store } = useContext(Context);
+    const { store, actions } = useContext(Context);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [map, setMap] = useState(null);
     const [countries, setCountries] = useState([]);
@@ -68,7 +68,7 @@ export const Direcciones = () => {
     // Cargar usuario desde el localStorage si no está en el store
     useEffect(() => {
         if (!store.user) {
-            actions.getUserFromLocalStorage();
+            actions.fetchUserData();
         }
     }, []); // Solo se ejecuta una vez al montar el componente
 

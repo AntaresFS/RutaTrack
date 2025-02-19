@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useContext } from 'react';
-import { store, actions } from '../store';
 import axios from 'axios';
 import { FaTrash } from "react-icons/fa";
 import { LuPenSquare } from "react-icons/lu";
