@@ -19,7 +19,7 @@ const DesktopControlPanel = () => {
         try {
             console.log("Iniciando proceso de logout...");
             const BACKEND_URL = process.env.REACT_APP_BACKEND_URL; // Centralizamos la URL 
-            const HEADERS = { "Content-Type": "application/json", 'X-CSRF-TOKEN': csrfToken }; // Reutilizable en peticiones
+            const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en peticiones
 
             await axios.post(`${BACKEND_URL}/api/logout`, {}, { headers: HEADERS, withCredentials: true }); // Enviar petición al backend con cookies
             localStorage.removeItem('user');

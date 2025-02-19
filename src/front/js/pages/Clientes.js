@@ -156,7 +156,7 @@ const ClientListTable = () => {
                     <div className="alert alert-danger mt-3">{error}</div>
                 )}
 
-                /* Tabla de clientes */
+                {/* Tabla de clientes */}
                 <table className="table table-bordered w-100">
                     <thead className="table-light">
                         <tr>
