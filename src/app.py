@@ -41,7 +41,7 @@ app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_COOKIE_SECURE'] = True  # En desarrollo: False, en producción: True (para HTTPS)
 app.config['JWT_COOKIE_HTTPONLY'] = True   
-app.config['JWT_COOKIE_SAMESITE'] = Strict 
+app.config['JWT_COOKIE_SAMESITE'] = 'Strict'   # Evita ataques CSRF
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'   # Ruta de la cookie
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True   # Habilita la protección CSRF para operaciones que modifican datos
 
