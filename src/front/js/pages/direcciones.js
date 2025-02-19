@@ -170,7 +170,7 @@ export const Direcciones = () => {
             user_id: currentUserId,
         };
 
-        axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/direcciones`, newAddress)
+        axios.post(`${BACKEND_URL}/api/direcciones`, newAddress)
             .then(response => {
                 console.log("Dirección creada: ", response.data);
                 setDirecciones(prevDirecciones => [...prevDirecciones, response.data]);
@@ -209,7 +209,7 @@ export const Direcciones = () => {
             user_id: currentUserId,
         };
 
-        axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/direcciones/${currentAddressId}`, updatedAddress)
+        axios.put(`${BACKEND_URL}/api/direcciones/${currentAddressId}`, updatedAddress)
             .then(response => {
                 console.log("Dirección actualizada: ", response.data);
                 setDirecciones(prevDirecciones =>
