@@ -30,8 +30,8 @@ export const Navbar = () => {
         setShowModal(true); // Mostrar el modal al hacer clic en "Mi Perfil"
     };
 
-    const handleProfile = () => {
-        navigate('/profile'); // Mostrar el modal al hacer clic en "Mi Perfil"
+    const handleIndex = () => {
+        navigate('/'); // Mostrar el modal al hacer clic en "Mi Perfil"
         window.location.reload()
     };
 
@@ -146,7 +146,7 @@ export const Navbar = () => {
                                 boxShadow: '0 2px 5px rgba(0, 0, 0, 0.3)',
                                 transition: 'all 0.3s',
                             }}
-                            onClick={handleProfile}
+                            onClick={handleIndex}
                         >
                             RutaTrack
                             <span className="ms-2">🚚</span>

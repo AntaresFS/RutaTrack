@@ -1,13 +1,11 @@
-from datetime import datetime, timezone
+from marshmallow import Schema, fields
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.schema import UniqueConstraint
 from sqlalchemy.sql import func
 from flask_jwt_extended import JWTManager
-from pytz import timezone
-import pytz
 import re
 from sqlalchemy.orm import validates
-from sqlalchemy.exc import IntegrityError
+
 
 
 db = SQLAlchemy()
@@ -340,3 +338,15 @@ class Partner(db.Model):
             'company_id' : self.company_id,
             'created_at' : self.created_at.isoformat()  # Convertir a formato ISO
         }
+    
+
+class UserSchema(Schema):
+    id = fields.Int(dump_only=True)
+    name = fields.Str(required=True)
+    last_name = fields.Str(required=True)
+    email = fields.Email(required=True)
+    location = fields.Str()
+    created_at = fields.DateTime(dump_only=True)
+
+# Instancia de UserSchema
+user_schema = UserSchema()

@@ -5,8 +5,6 @@ import MobileControlPanel from "../component/DesktopControlPanel";
 import DesktopControlPanel from "../component/DesktopControlPanel";
 import '../../styles/Profile.css';
 
-
-
 const Profile = () => {
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
     const apiOptions = { apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY };
@@ -26,13 +24,12 @@ const Profile = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // Cargar usuario desde el localStorage si no está en el store
+    // Cargar usuario desde el backend si no está en el store
     useEffect(() => {
         if (!store.user) {
-            actions.getUserFromLocalStorage(); // Obtener datos solo si no están en el store
+            actions.fetchUserData(); // Obtener datos solo si no están en el store
         }
     }, []); // Solo se ejecuta una vez al montar el componente
-
 
     // Inicializar y actualizar el mapa cuando el componente se monta o cambia la ubicación del usuario
     useEffect(() => {
@@ -81,7 +78,6 @@ const Profile = () => {
             console.error("Error al cargar Google Maps:", e);
         });
     }, [store.user?.location]); // Se ejecuta cuando cambia la ubicación del usuario
-
 
     // Mostrar un mensaje si no hay datos del usuario
     if (!store.user) {

@@ -42,37 +42,12 @@ const getState = ({ getStore, getActions, setStore }) => {
                 }
             },
 
-            // Función para recuperar los datos del usuario
-            getUserFromLocalStorage: () => {
-                const user = JSON.parse(localStorage.getItem("user"));
-                if (user) setStore({ user });  // Restaura el estado global si hay datos guardados
-            },
-
-            // Función para cargar los datos del usuario desde el localStorage
+            // Función para cargar los datos del usuario desde el backend
             fetchUserData: async () => {
                 try {
-                    // Obtener el token del localStorage
-                    const token = localStorage.getItem("accessToken");
-
-                    // Verificar si el token existe
-                    if (!token) {
-                        throw new Error("Token no disponible.");
-                    }
-
-                    // Obtener los datos del usuario desde el localStorage
-                    const userData = localStorage.getItem("user");
-
-                    // Verificar si los datos del usuario existen
-                    if (!userData) {
-                        throw new Error("Datos del usuario no disponibles.");
-                    }
-
-                    // Parsear los datos del usuario desde JSON
-                    const parsedUserData = JSON.parse(userData);
-
-                    // Almacenar los datos del usuario en el estado global
-                    setStore({ userData: parsedUserData });
-
+                    const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/me`, { withCredentials: true });
+                    const userData = response.data;
+                    setStore({ user: userData });
                 } catch (err) {
                     console.log("Error al cargar los datos del usuario:", err.message);
                 }
@@ -82,7 +57,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             updateUserData: (updatedUserData) => {
                 setStore((prevStore) => ({
                     ...prevStore,
-                    userData: updatedUserData
+                    user: updatedUserData
                 }));
             },
 
@@ -104,9 +79,7 @@ const getState = ({ getStore, getActions, setStore }) => {
             logout: async () => {
                 try {
                     await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, {}, { withCredentials: true });
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('user');
-                    setStore({ user: null, userData: null });
+                    setStore({ user: null });
                 } catch (error) {
                     console.log("Error al intentar cerrar la sesión. Contacte con el Administrador.")
                 }
@@ -128,7 +101,6 @@ const getState = ({ getStore, getActions, setStore }) => {
                     // Opcional: muestra un mensaje de error al usuario
                 }
             },
-
 
             // Función para obtener el mensaje del backend
             getMessage: async () => {

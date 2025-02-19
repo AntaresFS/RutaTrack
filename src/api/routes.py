@@ -1,15 +1,13 @@
 import os
-from sqlite3 import IntegrityError
-from flask import Blueprint, abort, jsonify, request, current_app, make_response, render_template
+from flask import Blueprint, jsonify, request, current_app
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
-import jwt
 from datetime import datetime, timedelta
-from flask_mail import Mail, Message
-from itsdangerous import URLSafeTimedSerializer, SignatureExpired
-from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner, PasswordResetToken
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, unset_jwt_cookies
-import pytz
+from flask_mail import Mail
+from itsdangerous import URLSafeTimedSerializer
+from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner, PasswordResetToken, user_schema
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, unset_jwt_cookies, set_access_cookies
+
 
 # Habilita CORS para todas las rutas y orígenes
 api = Blueprint('api', __name__)
@@ -102,7 +100,7 @@ def create_user():
         db.session.commit()
 
         # Crear un token JWT incluyendo el company_id
-        access_token = create_access_token(identity=new_user.id, additional_claims={"company_id": company.id})
+        access_token = create_access_token(identity=str(new_user.id), additional_claims={"company_id": company.id, "location": new_user.location})
 
         # Respuesta exitosa con el token
         return jsonify({
@@ -135,8 +133,8 @@ def login_user():
 
         # Busca el usuario en la base de datos
         user = User.query.filter_by(email=email).first()
-        if not user:
-            return jsonify({"error": "El usuario no existe. Verifica el email ingresado."}), 404        
+        if user is None:
+            return jsonify({"error": "El usuario no existe. Verifica el email ingresado."}), 404
         
         # Verifica la contraseña
         if not check_password_hash(user.password_hash, password):
@@ -148,35 +146,23 @@ def login_user():
             return jsonify({"error": "La cuenta no está asociada a una compañía registrada."}), 403
 
         # Genera el token JWT
-        access_token = create_access_token(identity=user.id)
+        access_token = create_access_token(identity=str(user.id))
  
         # Crea la respuesta con cookie HTTP-only
-        return jsonify({
-            "message": "Inicio de sesión exitoso.",
-            "token": access_token,
-            "user": {
-                "name": user.name, 
-                "last_name": user.last_name,
-                "email": user.email,
-                "company": company.name,
-                "location": user.location, 
-                "created_at": user.created_at
-            }
-        }), 200
+        response = jsonify(user=user_schema.dump(user))
+        set_access_cookies(response, access_token)
+        return response, 200
 
-    # Si falta una clave esperada en el JSON
-    except Exception as e:
-        api.logger.error(f"Clave faltante en /api/login: {e}")
+    except KeyError as e:
+        current_app.logger.error(f"Clave faltante en /api/login: {e}")
         return jsonify({"error": "Faltan campos obligatorios en el cuerpo de la solicitud."}), 400
     
-    # Para errores de validación o conversión de datos
     except ValueError as e:
-        api.logger.error(f"Valor inválido en /api/login: {e}")
+        current_app.logger.error(f"Valor inválido en /api/login: {e}")
         return jsonify({"error": "Hubo un problema con los datos proporcionados."}), 400
 
-    # Captura cualquier otro error inesperado
     except Exception as e:
-        api.logger.error(f"Error en /api/login: {e}")
+        current_app.logger.error(f"Error en /api/login: {e}")
         return jsonify({"error": "Error interno del servidor. Por favor, intenta nuevamente más tarde."}), 500
 
 
@@ -190,7 +176,7 @@ def request_password_reset():
         return jsonify({"message": "Si el correo existe, se enviará un enlace de recuperación."}), 200
 
     # Generar un token de recuperación
-    token = create_access_token(identity=user.id, expires_delta=timedelta(minutes=15))
+    token = create_access_token(identity=str(user.id), expires_delta=timedelta(minutes=15))
 
     # Almacenar el token en la base de datos
     reset_token = PasswordResetToken(
@@ -208,7 +194,7 @@ def request_password_reset():
     return jsonify({"message": "Correo de recuperación enviado (provisional). Revisa los logs para obtener el enlace."}), 200
 
 # Ruta para el formulario de restablecimiento
-@api.route('/reset-password', methods=['GET', 'POST'])
+@api.route('/api/reset-password', methods=['GET', 'POST'])
 def reset_password():
     # Procesar la solicitud de restablecimiento
     data = request.json
@@ -257,15 +243,18 @@ def get_current_user():
         "location": user.location,
         "company": company.name,
         "created_at": user.created_at           
-    })
+    }), 200
     
-      
+
+
+
 # Cerrar sesión
-@api.route('/logout', methods=['POST'])
+@api.route('/api/logout', methods=['POST'])
+@jwt_required(locations=["cookies"])
 def logout():
     response = jsonify({"message": "Cierre de sesión exitoso"})
     unset_jwt_cookies(response)  # Elimina las cookies JWT
-    return response
+    return response, 200
 
 # COMPAÑÍAS
 
@@ -665,7 +654,7 @@ def obtener_vehicles():
         return {"error": str(e)}, 500  # Devuelve un error si ocurre un problema
 
 
-# Metodo "POST"
+# Creación de un nuevo vehículo
 @api.route('/api/vehicles', methods=['POST'])
 def crear_vehicle():
 

@@ -11,17 +11,21 @@ const DesktopControlPanel = () => {
     const { actions } = useContext(Context);
     const navigate = useNavigate();
 
+
     const handleLogout = async () => {
         // Prevenir el comportamiento por defecto del enlace
         // event.preventDefault();
 
         try {
             console.log("Iniciando proceso de logout...");
-            await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/logout`, {}, { withCredentials: true });
-            localStorage.removeItem('accessToken');
+            const BACKEND_URL = process.env.REACT_APP_BACKEND_URL; // Centralizamos la URL 
+            const HEADERS = { "Content-Type": "application/json", 'X-CSRF-TOKEN': csrfToken }; // Reutilizable en peticiones
+
+            await axios.post(`${BACKEND_URL}/api/logout`, {}, { headers: HEADERS, withCredentials: true }); // Enviar petición al backend con cookies
             localStorage.removeItem('user');
             actions.setStore({ user: null, userData: null });
             console.log("Logout exitoso. Datos eliminados del localStorage.");
+            navigate('/');
         } catch (error) {
             console.error("Error al cerrar sesión:", error);
         }
