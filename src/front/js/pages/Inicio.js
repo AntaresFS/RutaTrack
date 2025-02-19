@@ -65,6 +65,7 @@ export const Inicio = () => {
         setShowModal({ login: false, register: false, success: false, forgotPassword: false });
         setMessages({ warning: "", loginWarning: "", forgotPasswordEmail: "" });
         resetFormData();  // Reinicia los valores de los formularios
+        lastFocusedElement?.focus(); // Restore focus to the last element
     };
 
     // Manejar el cierre de un modal específico
@@ -112,6 +113,7 @@ export const Inicio = () => {
                 actions.setUser(user);  // Guarda los datos del usuario en el store
                 console.log("Usuario almacenado:", user); // Muestra los datos del usuario obtenidos en la respuesta
                 console.log("Redirigiendo al perfil...");
+
                 navigate("/profile");
             }
 
