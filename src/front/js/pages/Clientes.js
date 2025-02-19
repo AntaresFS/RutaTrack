@@ -21,7 +21,7 @@ const ClientListTable = () => {
         phone: '',
         email: '',
     });
-    const [clients, setClients] = useState([]);
+    const [clients, setClients] = useState(() => []);
     const [error, setError] = useState(null); // Nuevo estado para manejar errores
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -142,9 +142,9 @@ const ClientListTable = () => {
         <div className="min-vh-100 d-flex">
 
             {/* Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla */}
-            {isMobile ? <MobileControlPanel /> :
-                <DesktopControlPanel />}
+            {isMobile ? <MobileControlPanel /> : <DesktopControlPanel />}
 
+            {/* Contenido de la página */}
             <div className="container-fluid py-4">
                 <div className="d-flex justify-content-between align-items-center mb-4">
                     <h2 className="fw-semibold">Clientes</h2>
@@ -156,7 +156,7 @@ const ClientListTable = () => {
                     <div className="alert alert-danger mt-3">{error}</div>
                 )}
 
-                {/* Tabla de clientes */}
+                /* Tabla de clientes */
                 <table className="table table-bordered w-100">
                     <thead className="table-light">
                         <tr>
@@ -168,7 +168,7 @@ const ClientListTable = () => {
                     </thead>
                     <tbody>
                         {clients.map((client, index) => (
-                            <tr key={index}>
+                            <tr key={client.id}>
                                 <td>{client.first_name} {client.last_name}</td>
                                 <td>{client.email}</td>
                                 <td>{client.phone}</td>
@@ -193,75 +193,75 @@ const ClientListTable = () => {
                     </tbody>
                 </table>
 
-                {/* Modal para agregar o editar clientes */}
                 {isModalOpen && (
                     <>
-                        <div className="modal-backdrop-custom"></div>
-                        <div className="modal show d-block" tabIndex="-1">
-                            <div className="modal-dialog">
-                                <div className="modal-content">
-                                    <div className="modal-header bg-secondary text-white d-flex justify-content-between align-items-center">
-                                        <h5 className="modal-title">{editingClientIndex !== null ? 'Editar cliente' : 'Agregar cliente'}</h5>
-                                        <div className="d-flex align-items-center justify-content-center">
-                                            <MdGroups className="fs-1" />
+                        <div className="modal-backdrop-custom">
+                            <div className="modal show d-block" tabIndex="-1">
+                                <div className="modal-dialog">
+                                    <div className="modal-content">
+                                        <div className="modal-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                                            <h5 className="modal-title">{editingClientIndex !== null ? 'Editar cliente' : 'Agregar cliente'}</h5>
+                                            <div className="d-flex align-items-center justify-content-center">
+                                                <MdGroups className="fs-1" />
+                                            </div>
+                                            <button type="button" className="btn-close" onClick={closeModal}></button>
                                         </div>
-                                        <button type="button" className="btn-close" onClick={closeModal}></button>
-                                    </div>
-                                    <div className="modal-body">
-                                        <form onSubmit={handleSubmit}>
-                                            {/* Mostrar errores específicos del formulario */}
-                                            {error && <div className="alert alert-danger">{error}</div>}
-                                            <div className="mb-3">
-                                                <label className="form-label">Nombre</label>
-                                                <input
-                                                    type="text"
-                                                    name="firstName"
-                                                    value={newClient.firstName}
-                                                    onChange={handleInputChange}
-                                                    className="form-control"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="mb-3">
-                                                <label className="form-label">Apellido</label>
-                                                <input
-                                                    type="text"
-                                                    name="lastName"
-                                                    value={newClient.lastName}
-                                                    onChange={handleInputChange}
-                                                    className="form-control"
-                                                    required
-                                                />
-                                            </div>
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Teléfono</label>
+                                        <div className="modal-body">
+                                            <form onSubmit={handleSubmit}>
+                                                {/* Mostrar errores específicos del formulario */}
+                                                {error && <div className="alert alert-danger">{error}</div>}
+                                                <div className="mb-3">
+                                                    <label className="form-label">Nombre</label>
                                                     <input
-                                                        type="tel"
-                                                        name="phone"
-                                                        value={newClient.phone}
+                                                        type="text"
+                                                        name="firstName"
+                                                        value={newClient.firstName}
                                                         onChange={handleInputChange}
                                                         className="form-control"
                                                         required
                                                     />
                                                 </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Correo electrónico</label>
+                                                <div className="mb-3">
+                                                    <label className="form-label">Apellido</label>
                                                     <input
-                                                        type="email"
-                                                        name="email"
-                                                        value={newClient.email}
+                                                        type="text"
+                                                        name="lastName"
+                                                        value={newClient.lastName}
                                                         onChange={handleInputChange}
                                                         className="form-control"
                                                         required
                                                     />
                                                 </div>
-                                            </div>
-                                            <div className="modal-footer mt-3">
-                                                <button type="button" className="btn btn-danger" onClick={closeModal}>Cancelar</button>
-                                                <button type="submit" className="btn btn-warning">{editingClientIndex !== null ? 'Actualizar' : 'Crear'}</button>
-                                            </div>
-                                        </form>
+                                                <div className="row">
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Teléfono</label>
+                                                        <input
+                                                            type="tel"
+                                                            name="phone"
+                                                            value={newClient.phone}
+                                                            onChange={handleInputChange}
+                                                            className="form-control"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div className="col-md-6">
+                                                        <label className="form-label">Correo electrónico</label>
+                                                        <input
+                                                            type="email"
+                                                            name="email"
+                                                            value={newClient.email}
+                                                            onChange={handleInputChange}
+                                                            className="form-control"
+                                                            required
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="modal-footer mt-3">
+                                                    <button type="button" className="btn btn-danger" onClick={closeModal}>Cancelar</button>
+                                                    <button type="submit" className="btn btn-warning">{editingClientIndex !== null ? 'Actualizar' : 'Crear'}</button>
+                                                </div>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -269,7 +269,7 @@ const ClientListTable = () => {
                     </>
                 )}
             </div>
-        </div>
+        </div >
     );
 };
 
