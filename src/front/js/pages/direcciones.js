@@ -32,8 +32,9 @@ export const Direcciones = () => {
         "cliente": "lightcoral",
     };
 
-    const currentUserId = store.userData.id;
-    console.log(currentUserId, "ID del usuario");
+    const currentUserId = store.user.id;
+    const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+    const GOOGLE_MAPS_API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
     const openModal = () => {
         resetForm();
@@ -73,7 +74,7 @@ export const Direcciones = () => {
 
     useEffect(() => {
         if (currentUserId) {
-            axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/direcciones?user_id=${currentUserId}`)
+            axios.get(`${BACKEND_URL}/api/direcciones?user_id=${currentUserId}`)
                 .then(response => {
                     if (Array.isArray(response.data)) {
                         setDirecciones(response.data);
@@ -95,7 +96,7 @@ export const Direcciones = () => {
 
     const initializeMap = () => {
         const loader = new Loader({
-            apiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY,
+            apiKey: GOOGLE_MAPS_API_KEY,
             version: 'weekly',
         });
 
