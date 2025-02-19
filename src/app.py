@@ -1,13 +1,12 @@
 import os
-from flask import Flask, request, jsonify, url_for, send_from_directory
+import sys
+from flask import Flask, jsonify, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_swagger import swagger
+sys.path.append('src')
 from api.utils import APIException, generate_sitemap
 from api.models import db, User
 from api.routes import api, addresses_bp, partners_bp, companies_bp
-from api.admin import setup_admin
-from api.commands import setup_commands
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from itsdangerous import URLSafeTimedSerializer
@@ -17,8 +16,10 @@ static_file_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '../
 
 app = Flask(__name__)
 
+
+
 # Configura CORS para permitir solicitudes desde los frontends especificados
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}})
 
 
 app.url_map.strict_slashes = False
@@ -38,6 +39,11 @@ app.config['MAIL_USERNAME'] = None
 app.config['MAIL_PASSWORD'] = None
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
+app.config['JWT_COOKIE_SECURE'] = False  # En desarrollo: False, en producción: True (para HTTPS)
+app.config['JWT_COOKIE_HTTPONLY'] = True   
+app.config['JWT_COOKIE_SAMESITE'] = None  
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/'   # Ruta de la cookie
+app.config['JWT_COOKIE_CSRF_PROTECT'] = True   # Habilita la protección CSRF para operaciones que modifican datos
 
 jwt = JWTManager(app)
 
