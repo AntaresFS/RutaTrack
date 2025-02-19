@@ -101,7 +101,7 @@ export const Inicio = () => {
         setMessages({ ...messages, loginWarning: "" });
 
         try {
-            const response = await axios.post('/api/token', signupData, {
+            const response = await axios.post(`${REACT_APP_BACKEND_URL}/api/token`, signupData, {
                 headers: HEADERS,
                 withCredentials: true
             });
@@ -155,7 +155,7 @@ export const Inicio = () => {
         }
 
         try {
-            const response = await axios.post('/api/register', registerData, { headers: HEADERS });
+            const response = await axios.post(`${REACT_APP_BACKEND_URL}/api/register`, registerData, { headers: HEADERS });
 
             if (response.status === 201) {
                 setMessages({ ...messages, warning: "" })
