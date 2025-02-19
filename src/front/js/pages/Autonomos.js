@@ -1,16 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useContext } from 'react';
+import { store, actions } from '../store';
 import axios from 'axios';
 import { FaTrash } from "react-icons/fa";
 import { LuPenSquare } from "react-icons/lu";
-import { jwtDecode } from 'jwt-decode';
 import ColaboradorForm from '../component/colaboradorForm';
 import DesktopControlPanel from '../component/DesktopControlPanel';
 import MobileControlPanel from '../component/MobileControlPanel';
+import { Context } from '../store/appContext';
 
 
 const Autonomos = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [colaboradores, setColaboradores] = useState([]);
+  const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [isEditing, setIsEditing] = useState(false); // Estado para manejar si es edición o no
+  const { store, actions } = useContext(Context);
+  const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+  // Estado para manejar los datos del formulario
   const [formData, setFormData] = useState({
     nombre: '',
     email: '',
@@ -19,10 +28,6 @@ const Autonomos = () => {
     periodosEspera: '',
     incluirPeajes: false
   });
-  const [error, setError] = useState('');
-  const [warning, setWarning] = useState('');
-  const [currentUserId, setCurrentUserId] = useState(null);
-  const [isEditing, setIsEditing] = useState(false); // Estado para manejar si es edición o no
 
 
   // Mostrar el panel de control móvil o de escritorio según el tamaño de la pantalla
@@ -34,21 +39,13 @@ const Autonomos = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cargar usuario desde el localStorage si no está en el store
+  // Cargar usuario desde el backend si no está en el store
   useEffect(() => {
     if (!store.user) {
-      actions.getUserFromLocalStorage();
+      actions.fetchUserData();
     }
   }, []); // Solo se ejecuta una vez al montar el componente
 
-  // Obtener el user_id del token y los colaboradores del usuario
-  useEffect(() => {
-    const obtenerUserIdYColaboradores = async () => {
-      const token = localStorage.getItem('token');
-    };
-
-    obtenerUserIdYColaboradores();
-  }, []);     // Solo se ejecuta una vez al montar el componente
 
   // Manejar los cambios en los campos del formulario
   const handleInputChange = (e) => {
@@ -98,16 +95,14 @@ const Autonomos = () => {
     }
 
     try {
-      // Enviar datos del nuevo colaborador a la API de Flask usando Axios
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/socios`, {
-        user_id: 1, // Aquí deberías pasar el user_id correcto
-        nombre: formData.nombre,
+      // Enviar datos del nuevo colaborador a la API
+      const response = await axios.post(`${BACKEND_URL}/api/partners`, {
+        name: formData.nombre,
         email: formData.email,
-        tipo_precio: formData.tipoPrecio,
-        precio: formData.precio,
-        periodos_espera: formData.periodosEspera,
-        incluir_peajes: formData.incluirPeajes,
-        user_id: currentUserId
+        price_type: formData.tipoPrecio,
+        price: formData.precio,
+        waiting_periods: formData.periodosEspera,
+        include_tolls: formData.incluirPeajes,
       });
 
       setColaboradores([...colaboradores, response.data.socio]);
@@ -137,7 +132,7 @@ const Autonomos = () => {
   // Eliminar un colaborador
   const eliminarColaborador = async (email) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/socios/${email}?user_id=${currentUserId}`);
+      await axios.delete(`${BACKEND_URL}/api/partners/${email}?user_id=${currentUserId}`);
 
       setColaboradores(colaboradores.filter(colaborador => colaborador.email !== email));
     } catch (error) {
@@ -175,14 +170,13 @@ const Autonomos = () => {
 
     try {
       // Usar el email del formData en la URL de la solicitud PUT
-      await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/socios/${formData.email}`, {
-        nombre: formData.nombre,
+      await axios.put(`${BACKEND_URL}/api/partners/${formData.email}`, {
+        name: formData.nombre,
         email: formData.email, // Actualiza si es necesario
-        tipo_precio: formData.tipoPrecio,
-        precio: formData.precio,
-        periodos_espera: formData.periodosEspera,
-        incluir_peajes: formData.incluirPeajes,
-        user_id: currentUserId
+        price_type: formData.tipoPrecio,
+        price: formData.precio,
+        waiting_periods: formData.periodosEspera,
+        include_tolls: formData.incluirPeajes,
       });
 
       // Actualizar la lista de colaboradores
