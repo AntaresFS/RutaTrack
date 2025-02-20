@@ -33,7 +33,7 @@ export const Flota = () => {
         sueldo: ''
     });
 
-    const [vehiculos, setVehiculos] = useState([]);
+    const [vehiculos, setVehiculos] = useState([]); // Inicializar como array vacío
 
     const handleTabClick = (tab) => {
         setActiveTab(tab);
@@ -135,7 +135,11 @@ export const Flota = () => {
     const fetchVehiculos = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos`);
-            setVehiculos(response.data);
+            if (Array.isArray(response.data)) {
+                setVehiculos(response.data);
+            } else {
+                console.error('La respuesta de la API no es un array:', response.data);
+            }
         } catch (error) {
             console.error('Error al obtener vehículos:', error);
         }
