@@ -74,7 +74,7 @@ export const Direcciones = () => {
 
     useEffect(() => {
         if (currentUserId) {
-            axios.get(`${BACKEND_URL}/api/direcciones?user_id=${currentUserId}`)
+            axios.get(`${BACKEND_URL}/api/addresses?user_id=${currentUserId}`)
                 .then(response => {
                     if (Array.isArray(response.data)) {
                         setDirecciones(response.data);
@@ -170,7 +170,7 @@ export const Direcciones = () => {
             user_id: currentUserId,
         };
 
-        axios.post(`${BACKEND_URL}/api/direcciones`, newAddress)
+        axios.post(`${BACKEND_URL}/api/addresses`, newAddress)
             .then(response => {
                 console.log("Dirección creada: ", response.data);
                 setDirecciones(prevDirecciones => [...prevDirecciones, response.data]);
@@ -209,7 +209,7 @@ export const Direcciones = () => {
             user_id: currentUserId,
         };
 
-        axios.put(`${BACKEND_URL}/api/direcciones/${currentAddressId}`, updatedAddress)
+        axios.put(`${BACKEND_URL}/api/addresses/${currentAddressId}`, updatedAddress)
             .then(response => {
                 console.log("Dirección actualizada: ", response.data);
                 setDirecciones(prevDirecciones =>
@@ -234,7 +234,7 @@ export const Direcciones = () => {
     const handleDelete = (id) => {
         const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar esta dirección?");
         if (confirmDelete) {
-            axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/direcciones/${id}`, {
+            axios.delete(`${BACKEND_URL}/api/addresses/${id}`, {
                 data: { user_id: currentUserId } // Asegúrate de que currentUserId esté definido
             })
                 .then(() => {

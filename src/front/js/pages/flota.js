@@ -11,6 +11,8 @@ export const Flota = () => {
     const { store, actions } = useContext(Context);
     const [activeTab, setActiveTab] = useState('vehiculos');
     const [showModal, setShowModal] = useState(false);
+    const BACKEND_URL = process.env.BACKEND_URL;
+
     const [vehiculoData, setVehiculoData] = useState({
         id: null,
         nombre: '',
@@ -98,11 +100,11 @@ export const Flota = () => {
 
                 if (vehiculoData.id) {
                     // Editar vehículo existente
-                    const response = await axios.put(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos/${vehiculoData.id}`, updatedVehiculoData);
+                    const response = await axios.put(`${BACKEND_URL}/api/vehicles/${vehiculoData.id}`, updatedVehiculoData);
                     console.log('Vehículo editado', response.data);
                 } else {
                     // Agregar nuevo vehículo (usar POST)
-                    const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos`, updatedVehiculoData);
+                    const response = await axios.post(`${BACKEND_URL}/api/vehicles`, updatedVehiculoData);
                     console.log('Vehículo guardado', response.data);
                 }
                 fetchVehiculos();
@@ -134,7 +136,7 @@ export const Flota = () => {
 
     const fetchVehiculos = async () => {
         try {
-            const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos`);
+            const response = await axios.get(`${BACKEND_URL}/api/vehicles`);
             if (Array.isArray(response.data)) {
                 setVehiculos(response.data);
             } else {
@@ -153,7 +155,7 @@ export const Flota = () => {
     const handleDelete = async (id) => {
         if (window.confirm("¿Estás seguro de que quieres eliminar este vehículo?")) {
             try {
-                await axios.delete(`${process.env.REACT_APP_BACKEND_URL}/api/vehiculos/${id}`);
+                await axios.delete(`${BACKEND_URL}/api/vehicles/${id}`);
                 console.log('Vehículo eliminado');
                 fetchVehiculos();
             } catch (error) {
