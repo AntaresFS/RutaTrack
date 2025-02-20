@@ -43,6 +43,8 @@ export const Inicio = () => {
         forgotPasswordEmail: ""
     });
 
+    const [lastFocusedElement, setLastFocusedElement] = useState(null);
+
     // Función para redirigir a otra página
     const navigate = useNavigate();
 
@@ -65,13 +67,19 @@ export const Inicio = () => {
         setShowModal({ login: false, register: false, success: false, forgotPassword: false });
         setMessages({ warning: "", loginWarning: "", forgotPasswordEmail: "" });
         resetFormData();  // Reinicia los valores de los formularios
-        lastFocusedElement?.focus(); // Restore focus to the last element
+        if (lastFocusedElement) lastFocusedElement.focus(); // Restore focus to the last element
     };
 
     // Manejar el cierre de un modal específico
     const closeSpecificModal = (modalType) => {
         setShowModal({ ...showModal, [modalType]: false });
         resetFormData();
+    };
+
+    // Función para abrir los modales con foco
+    const setShowModalWithFocus = (modalState) => {
+        setLastFocusedElement(document.activeElement);
+        setShowModal(modalState);
     };
 
     // Función para cerrar los modales con la tecla Esc.
@@ -214,10 +222,10 @@ export const Inicio = () => {
                                 </button>
                             ) : (
                                 <>
-                                    <button type="button" className="btn-custom-primary" onClick={() => setShowModal({ ...showModal, login: true })}>
+                                    <button type="button" className="btn-custom-primary" onClick={() => setShowModalWithFocus({ ...showModal, login: true })}>
                                         Inicia Sesión
                                     </button>
-                                    <button type="button" className="btn-custom-secondary" onClick={() => setShowModal({ ...showModal, register: true })}>
+                                    <button type="button" className="btn-custom-secondary" onClick={() => setShowModalWithFocus({ ...showModal, register: true })}>
                                         Crear cuenta
                                     </button>
                                 </>
