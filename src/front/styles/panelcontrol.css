@@ -41,7 +41,7 @@
 
 /* Profile */
 .my-profile-button {
-  background-color: #f04c4c; /* Cambia el color de fondo */
+  background-color: #ffc107; /* Cambia el color de fondo */
   color: white; /* Color del texto */
   border: none; /* Sin borde */
   padding: 10px 15px; /* Espaciado */
@@ -57,12 +57,12 @@
 }
 
 .my-profile-button:hover {
-  background-color: #ff0000; /* Color al pasar el mouse */
+  background-color: #ff9900; /* Color al pasar el mouse */
 }
 
 /* Logout Button */
 .logout-button {
-  background-color: #ffc107; /* Cambia el color de fondo */
+  background-color: #f04c4c; /* Cambia el color de fondo */
   color: white; /* Color del texto */
   border: none; /* Sin borde */
   padding: 10px 15px; /* Espaciado */
@@ -72,5 +72,5 @@
 }
 
 .logout-button:hover {
-  background-color: #ff9900; /* Color al pasar el mouse */
+  background-color: #ff0000; /* Color al pasar el mouse */
 }
