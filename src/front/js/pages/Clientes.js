@@ -21,7 +21,7 @@ const ClientListTable = () => {
         phone: '',
         email: '',
     });
-    const [clients, setClients] = useState(() => []);
+    const [clients, setClients] = useState([]); // Inicializar como array vacío
     const [error, setError] = useState(null); // Nuevo estado para manejar errores
     const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -45,7 +45,11 @@ const ClientListTable = () => {
     useEffect(() => {
         axios.get(`${BACKEND_URL}/api/clients`)
             .then(response => {
-                setClients(response.data);
+                if (Array.isArray(response.data)) {
+                    setClients(response.data);
+                } else {
+                    console.error('La respuesta de la API no es un array:', response.data);
+                }
             })
             .catch(error => {
                 console.error('Error fetching clients:', error);
