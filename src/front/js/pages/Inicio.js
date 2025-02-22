@@ -28,6 +28,8 @@ export const Inicio = () => {
         confirmPassword: ""
     });
 
+    const [rememberMe, setRememberMe] = useState(false);
+
     // Función para abrir modal
     const [showModal, setShowModal] = useState({
         login: false,
@@ -104,13 +106,18 @@ export const Inicio = () => {
         setSignUpData({ ...signupData, [e.target.name]: e.target.value });
     };
 
+    // Función para manejar el cambio del checkbox "Recuérdame"
+    const handleRememberMeChange = (e) => {
+        setRememberMe(e.target.checked);
+    };
+
     // Función para iniciar sesión
     const handleSubmit = async (e) => {
         e.preventDefault();
         setMessages({ ...messages, loginWarning: "" });
 
         try {
-            const response = await axios.post(`${REACT_APP_BACKEND_URL}/api/token`, signupData, {
+            const response = await axios.post(`${REACT_APP_BACKEND_URL}/api/token`, { ...signupData, rememberMe }, {
                 headers: HEADERS,
                 withCredentials: true
             });
@@ -264,6 +271,16 @@ export const Inicio = () => {
                                         required
                                     />
                                 </div>
+                            </div>
+                            <div className="form-group text-start my-2 p-2">
+                                <input
+                                    type="checkbox"
+                                    id="rememberMe"
+                                    name="rememberMe"
+                                    checked={rememberMe}
+                                    onChange={handleRememberMeChange}
+                                />
+                                <label className="p-2" htmlFor="rememberMe">Recuérdame</label>
                             </div>
                             <div className="form-group text-center my-2 p-2">
                                 <a

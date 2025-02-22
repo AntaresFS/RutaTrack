@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from flask_mail import Mail
 from itsdangerous import URLSafeTimedSerializer
 from api.models import db, Address, Company, User, ContactMessage, Vehicle, Client, Partner, PasswordResetToken, user_schema
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, unset_jwt_cookies, set_access_cookies
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity, unset_jwt_cookies, set_access_cookies, create_refresh_token, set_refresh_cookies
 
 
 # Habilita CORS para todas las rutas y orígenes
@@ -71,7 +71,7 @@ def create_user():
     
         # Verificar si el correo ya está registrado
         existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
+        if (existing_user):
             return jsonify({"error": "El usuario ya está registrado"}), 409
         
         # Obtener o crear la compañía
@@ -127,6 +127,7 @@ def login_user():
 
         email = data.get('email', '').strip().lower()
         password = data.get('password', '').strip()
+        remember_me = data.get('rememberMe', False)
 
         if not email or not password:
             return jsonify({"error": "El email y la contraseña son requeridos"}), 400
@@ -145,12 +146,15 @@ def login_user():
         if not company:
             return jsonify({"error": "La cuenta no está asociada a una compañía registrada."}), 403
 
-        # Genera el token JWT
-        access_token = create_access_token(identity=str(user.id))
- 
-        # Crea la respuesta con cookie HTTP-only
+        # Configura la duración del token según la opción "Recuérdame"
+        expires_delta = timedelta(days=365) if remember_me else timedelta(hours=1)
+        access_token = create_access_token(identity=str(user.id), expires_delta=expires_delta)
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        # Crea la respuesta con cookies HTTP-only
         response = jsonify(user=user_schema.dump(user))
         set_access_cookies(response, access_token)
+        set_refresh_cookies(response, refresh_token)
         return response, 200
 
     except KeyError as e:
