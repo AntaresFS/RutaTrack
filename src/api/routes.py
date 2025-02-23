@@ -153,8 +153,8 @@ def login_user():
 
         # Crea la respuesta con cookies HTTP-only
         response = jsonify(user=user_schema.dump(user))
-        set_access_cookies(response, access_token)
-        set_refresh_cookies(response, refresh_token)
+        set_access_cookies(response, access_token, max_age=3600)
+        set_refresh_cookies(response, refresh_token, max_age=2592000)
         return response, 200
 
     except KeyError as e:
