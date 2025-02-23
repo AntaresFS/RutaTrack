@@ -8,7 +8,7 @@ from api.utils import APIException, generate_sitemap
 from api.models import db, User
 from api.routes import api, addresses_bp, partners_bp, companies_bp
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
+from flask_jwt_extended import JWTManager             
 from itsdangerous import URLSafeTimedSerializer
 from datetime import timedelta
 
@@ -40,13 +40,19 @@ app.config['MAIL_USERNAME'] = None
 app.config['MAIL_PASSWORD'] = None
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_SECURE'] = False  # En desarrollo: False, en producción: True (para HTTPS)
-app.config['JWT_COOKIE_HTTPONLY'] = True   
-app.config['JWT_COOKIE_SAMESITE'] = 'Strict'   # Evita ataques CSRF
+app.config['JWT_COOKIE_SECURE'] = True  # En desarrollo: False, en producción: True (para HTTPS)  
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'   # Ruta de la cookie
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True   # Habilita la protección CSRF para operaciones que modifican datos
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Duración del token de acceso
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Duración del token de refresco
+
+# Configuración de cookies 
+if ENV == "production":
+    app.config["JWT_COOKIE_SAMESITE"] = "None"
+    app.config["JWT_COOKIE_SECURE"] = True
+else:
+    app.config['JWT_COOKIE_SAMESITE'] = 'Lax'
+    app.config['JWT_COOKIE_HTTPONLY'] = False
 
 jwt = JWTManager(app)
 
