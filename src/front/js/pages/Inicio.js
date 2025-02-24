@@ -12,6 +12,7 @@ const HEADERS = { "Content-Type": "application/json" }; // Reutilizable en petic
 
 export const Inicio = () => {
     const { actions } = useContext(Context);
+    const [showPassword, setShowPassword] = useState(false);
 
     const [signupData, setSignUpData] = useState({
         email: "",
@@ -258,18 +259,26 @@ export const Inicio = () => {
                                         required
                                     />
                                 </div>
-                                <div className="col-lg-6 form-input fw-bold text-start mb-3">
-                                    <label className="p-2" htmlFor="password">Password</label>
-                                    <input
-                                        type="password"
-                                        className="form-control"
-                                        id="password"
-                                        name="password"
-                                        placeholder="Contraseña"
-                                        value={signupData.password}
-                                        onChange={handleChange}
-                                        required
-                                    />
+                                <div className="password-input col-lg-6 fw-bold text-start mb-3">
+                                    <label className="p-2" htmlFor="password">Contraseña</label>
+                                    <div className="password-toggle">
+                                        <input
+                                            type={showPassword ? "text" : "password"}
+                                            className="form-control"
+                                            id="password"
+                                            name="password"
+                                            placeholder="Contraseña"
+                                            value={signupData.password}
+                                            onChange={handleChange}
+                                            required
+                                        />
+                                        <span
+                                            className="password-toggle-icon"
+                                            onClick={() => setShowPassword(prev => !prev)}
+                                        >
+                                            <i className={`fas ${showPassword ? "fa-eye-slash" : "fa-eye"}`}></i>
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                             <div className="form-group text-start my-2 p-2">
