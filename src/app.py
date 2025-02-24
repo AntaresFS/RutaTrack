@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 
 # Configura CORS para permitir solicitudes desde los frontends especificados
-CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": "http://localhost:3000"}})
+CORS(app, supports_credentials=True, resources={r"/api/*": {"origins": ["http://localhost:3000", "https://rutatrack.onrender.com"]}})
 
 
 app.url_map.strict_slashes = False
@@ -45,6 +45,8 @@ app.config['JWT_ACCESS_COOKIE_PATH'] = '/'   # Ruta de la cookie
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True   # Habilita la protección CSRF para operaciones que modifican datos
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Duración del token de acceso
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Duración del token de refresco
+
+ENV = os.getenv('FLASK_ENV', 'production')
 
 # Configuración de cookies 
 if ENV == "production":
