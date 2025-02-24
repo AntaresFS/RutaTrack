@@ -40,7 +40,7 @@ app.config['MAIL_USERNAME'] = None
 app.config['MAIL_PASSWORD'] = None
 app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET_KEY")
 app.config['JWT_TOKEN_LOCATION'] = ['cookies']
-app.config['JWT_COOKIE_SECURE'] = True  # En desarrollo: False, en producción: True (para HTTPS)  
+app.config['JWT_COOKIE_HTTPONLY'] = True   # La cookie no se puede leer desde JavaScript
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'   # Ruta de la cookie
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True   # Habilita la protección CSRF para operaciones que modifican datos
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Duración del token de acceso
@@ -48,11 +48,11 @@ app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Duración del to
 
 # Configuración de cookies 
 if ENV == "production":
-    app.config["JWT_COOKIE_SAMESITE"] = "None"
+    app.config['JWT_COOKIE_SAMESITE'] = 'None'
     app.config["JWT_COOKIE_SECURE"] = True
 else:
-    app.config['JWT_COOKIE_SAMESITE'] = 'Lax'
-    app.config['JWT_COOKIE_HTTPONLY'] = False
+    app.config['JWT_COOKIE_SAMESITE'] = 'None'
+    app.config['JWT_COOKIE_SECURE'] = False
 
 jwt = JWTManager(app)
 
