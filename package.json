@@ -82,6 +82,7 @@
     "@radix-ui/react-alert-dialog": "^1.1.1",
     "@react-google-maps/api": "^2.19.3",
     "@vis.gl/react-google-maps": "^1.1.2",
+    "@remix-run/dev": "^2.16.2",
     "axios": "^1.7.7",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
