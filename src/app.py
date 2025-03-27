@@ -43,7 +43,7 @@ app.config['JWT_TOKEN_LOCATION'] = ['cookies']
 app.config['JWT_COOKIE_HTTPONLY'] = True   # La cookie no se puede leer desde JavaScript
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'   # Ruta de la cookie
 app.config['JWT_COOKIE_CSRF_PROTECT'] = True   # Habilita la protección CSRF para operaciones que modifican datos
-app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1)  # Duración del token de acceso
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=1 )  # Duración del token de acceso
 app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)  # Duración del token de refresco
 
 ENV = os.getenv('FLASK_ENV', 'production')
